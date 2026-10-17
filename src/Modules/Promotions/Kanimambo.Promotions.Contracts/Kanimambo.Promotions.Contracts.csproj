@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Public surface of the Promotions module. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Kanimambo.SharedKernel\Kanimambo.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

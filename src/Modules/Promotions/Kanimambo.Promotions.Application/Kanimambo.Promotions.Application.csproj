@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Promotions.Domain\Kanimambo.Promotions.Domain.csproj" />
+    <ProjectReference Include="..\Kanimambo.Promotions.Contracts\Kanimambo.Promotions.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kanimambo.Promotions.UnitTests" />
+  </ItemGroup>
+
+</Project>
