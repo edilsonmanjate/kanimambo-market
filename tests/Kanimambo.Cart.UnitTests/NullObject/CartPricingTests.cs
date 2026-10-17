@@ -111,7 +111,7 @@ public sealed class CartPricingTests
     }
 
     private static CatalogItemSnapshot Item(string sku, Money price, int stock) =>
-        new(Guid.NewGuid(), Guid.NewGuid(), sku, sku, "mercearia", price, stock);
+        new(Guid.NewGuid(), Guid.NewGuid(), sku, sku, "mercearia", price, stock, 1m);
 
     private sealed record TestPromotion(string Name, Money Discount) : IAppliedPromotion
     {
