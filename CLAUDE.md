@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 0 complete; awaiting approval for Phase 1 (Catalog).
+**Current phase:** Phase 1 (Catalog) complete; awaiting approval for Phase 2 (Cart & Promotions).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -224,5 +224,12 @@ Decisions taken (see `docs/adr/`):
 - HTTP idempotency is stored in PostgreSQL (`platform.IdempotencyRecords`), not Redis.
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x): `dotnet test --solution Kanimambo.slnx`; coverage via `Microsoft.Testing.Extensions.CodeCoverage` + ReportGenerator (local tool).
 - Pinned transitive `MessagePack` 2.5.303 (vulnerability in the version pulled by Aspire.Hosting).
-- Integration tests use one assembly fixture (`KanimamboApiFactory`) that starts the host eagerly.
-- New module checklist: add `AddApplicationPart` + `AddModule` in `Program.cs`, own DbContext/schema/migrations, keyed UoW + inbox, reference from `Kanimambo.Api` so architecture tests discover it.
+- Integration tests derive from `tests/Kanimambo.Testing/KanimamboWebApplicationFactory` (containers + eager host start), one assembly fixture per test project.
+- New module checklist: `builder.Add<Module>Module()` (uses `AddModuleDbContext<T>` → own schema, migrations, keyed UoW + inbox), `AddApplicationPart` + `AddModule` in `Program.cs`, reference the module from `Kanimambo.Api` so architecture tests discover it.
+- Catalog search runs specifications over the `catalog.catalog_entries` view; its recursive CTE mirrors the Composite rules (ADR 0004). Changing bundle arithmetic means changing both — an integration test guards that they agree.
+- Shared EF plumbing: `Kanimambo.SharedKernel.Infrastructure` (`AddModuleDbContext<T>`, `EfUnitOfWork<T>`, `EfInboxStore<T>`, `MigratableDbContext`).
+- Auth: JWT bearer; policy/role `backoffice`; locally `dotnet user-jwts` (ADR 0005); tests mint tokens via `KanimamboWebApplicationFactory.CreateClientAs`.
+- Simulators: ExchangeRates (800 ms, 30 calls/min, simulated rates) and Wholesaler (2 400 SKUs, 300 ms/page). The Wholesaler simulator is an addition to the original tree, needed to run the Iterator locally.
+- Error type `Unavailable` → 503 for upstream outages and exhausted quotas.
+- Flyweight pool is process-wide static (`VariantAttributesPool.Shared`) because EF value converters cannot take DI services.
+- Integration tests share one database per test assembly: tests that mutate data create their own seller (`CatalogApiFactory.CreateSellerAsync`); assertions on seed data filter by `CatalogSeeder.SellerIds`.

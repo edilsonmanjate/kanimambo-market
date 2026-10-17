@@ -13,9 +13,18 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**Phase 0 – Foundations** is complete: solution layout, Aspire orchestration, SharedKernel
-(including the in-house **Mediator** and the **Specification** base), the API host with
-ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
+**9 of 26 patterns implemented.**
+
+- **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
+  **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
+- **Phase 1 – Catalog:**
+  - sellers, products and nested bundles (**Composite**);
+  - shared variant attributes (**Flyweight**);
+  - SQL-translated search filters (**Specification**);
+  - streaming the wholesaler API (**Iterator**);
+  - CSV, Excel, XML and API imports (**Template Method**);
+  - an audited, undoable back-office (**Command**);
+  - cached, rate-limited exchange rates (**Proxy**).
 
 ## Design patterns index
 
@@ -26,15 +35,15 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Pattern | Business problem | Module | Phase | Status | Docs |
 |---|---|---|---|---|---|
 | Chain of Responsibility | Order acceptance checks (NUIT, stock, delivery zone, anti-fraud, seller minimum) | Ordering | 3 | ⏳ | — |
-| Command | Auditable, undoable back-office operations (bulk price change, suspend seller) | Catalog | 1 | ⏳ | — |
+| Command | Auditable, undoable back-office operations (bulk price change, suspend seller) | Catalog | 1 | ✅ | [Command](docs/patterns/Command.md) |
 | Interpreter | Marketing-authored promotion rules evaluated at runtime | Promotions | 2 | ⏳ | — |
-| Iterator | Streaming a slow, paginated wholesaler catalog as `IAsyncEnumerable` | Catalog | 1 | ⏳ | — |
+| Iterator | Streaming a slow, paginated wholesaler catalog as `IAsyncEnumerable` | Catalog | 1 | ✅ | [Iterator](docs/patterns/Iterator.md) |
 | Mediator | In-process dispatch of commands/queries/notifications with ordered pipeline behaviors | SharedKernel | 0 | ✅ | [Mediator](docs/patterns/Mediator.md) |
 | Memento | Cart snapshots for customers who lose connectivity; undo on B2B drafts | Cart | 2 | ⏳ | — |
 | Observer | `OrderPaid` → invoice, SMS, seller notification, stock reservation (with outbox) | Transversal | 3 | ⏳ | — |
 | State | Order lifecycle and mobile-money payment lifecycle | Ordering, Payments | 3–4 | ⏳ | — |
 | Strategy | Shipping cost: same-day by zone, inter-provincial by weight, pickup point | Shipping | 5 | ⏳ | — |
-| Template Method | Seller catalog imports (CSV, Excel, XML) with fixed steps and per-format hooks | Catalog | 1 | ⏳ | — |
+| Template Method | Seller catalog imports (CSV, Excel, XML, wholesaler API) with fixed steps and per-format hooks | Catalog | 1 | ✅ | [Template Method](docs/patterns/TemplateMethod.md) |
 | Visitor | Fiscal document tree → e-Declaração CSV/XLSX/XML, invoice PDF, IVA summary | Invoicing | 6 | ⏳ | — |
 
 ### Creational
@@ -55,12 +64,12 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 |---|---|---|---|---|---|
 | Adapter | M-Pesa / e-Mola / mKesh (and couriers) behind one gateway with unified errors | Payments, Shipping | 4–5 | ⏳ | — |
 | Bridge | Message types × channels (SMS ≤160 chars, WhatsApp, e-mail) | Notifications | 7 | ⏳ | — |
-| Composite | Bundles ("cabaz do mês") with recursive price, weight, stock and per-item IVA | Catalog | 1 | ⏳ | — |
+| Composite | Bundles ("cabaz do mês") with recursive price, weight, stock and per-item IVA | Catalog | 1 | ✅ | [Composite](docs/patterns/Composite.md) |
 | Decorator | Caching, retry, logging and metrics around repositories and HTTP clients | Infra | 4 | ⏳ | — |
 | Facade | `CheckoutService` orchestrating cart, promotions, shipping, order, payment | Ordering | 3 | ⏳ | — |
-| Flyweight | 100k product variants sharing interned immutable attributes | Catalog | 1 | ⏳ | — |
-| Proxy | Cache + rate limit in front of a slow USD/ZAR → MZN exchange-rate API | Catalog | 1 | ⏳ | — |
-| Specification | Composable catalog filters translated to SQL by EF Core | Catalog | 0–1 | 🟡 base in SharedKernel; EF/PostgreSQL proof in Phase 1 | [Specification](docs/patterns/Specification.md) |
+| Flyweight | 100k product variants sharing interned immutable attributes (−52% retained memory) | Catalog | 1 | ✅ | [Flyweight](docs/patterns/Flyweight.md) |
+| Proxy | Cache + rate limit in front of a slow USD/ZAR → MZN exchange-rate API | Catalog | 1 | ✅ | [Proxy](docs/patterns/Proxy.md) |
+| Specification | Composable catalog filters translated to SQL by EF Core | Catalog | 0–1 | ✅ | [Specification](docs/patterns/Specification.md) |
 
 ## Architecture
 
@@ -76,22 +85,30 @@ flowchart LR
     mediator --> payments[Payments] & shipping[Shipping] & invoicing[Invoicing] & notifications[Notifications]
     catalog & ordering & payments & invoicing --> pg[(PostgreSQL<br/>one schema per module)]
     api --> redis[(Redis)]
+    catalog -.-> fx[[Exchange-rate simulator]]
+    catalog -.-> ws[[Wholesaler simulator]]
     payments -.-> mm[[Mobile-money simulator]]
     shipping -.-> courier[[Courier simulator]]
 ```
 
 ```
 src/
-  Kanimambo.AppHost/          .NET Aspire orchestration (PostgreSQL, Redis, API, simulators)
-  Kanimambo.ServiceDefaults/  OpenTelemetry, health checks, service discovery, resilience
-  Kanimambo.Api/              Host: controllers registration, ProblemDetails, idempotency middleware
-  Kanimambo.SharedKernel/     Entity, AggregateRoot, DomainEvent, Result<T>, Money, Specification, Mediator
-  Kanimambo.SharedKernel.Web/ ApiControllerBase (Result → ProblemDetails), shared HTTP attributes
-  Modules/<Module>/           {Api, Application, Domain, Infrastructure} — added phase by phase
+  Kanimambo.AppHost/                    .NET Aspire orchestration (PostgreSQL, Redis, API, simulators)
+  Kanimambo.ServiceDefaults/            OpenTelemetry, health checks, service discovery, resilience
+  Kanimambo.Api/                        Host: module registration, ProblemDetails, auth, idempotency middleware
+  Kanimambo.SharedKernel/               Entity, AggregateRoot, DomainEvent, Result<T>, Money, Specification, Mediator
+  Kanimambo.SharedKernel.Web/           ApiControllerBase (Result → ProblemDetails), shared HTTP attributes
+  Kanimambo.SharedKernel.Infrastructure/ EF unit of work, inbox, per-module DbContext registration
+  Modules/Catalog/                      {Api, Application, Domain, Infrastructure}
+  Simulators/                           ExchangeRates, Wholesaler (later: MobileMoney, Courier)
 tests/
   Kanimambo.SharedKernel.UnitTests/
-  Kanimambo.Api.IntegrationTests/   WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
-  Kanimambo.ArchitectureTests/      NetArchTest: layer and module isolation rules
+  Kanimambo.Catalog.UnitTests/
+  Kanimambo.Api.IntegrationTests/       WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
+  Kanimambo.Catalog.IntegrationTests/   real API + in-process simulators
+  Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
+  Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight; Object Pool in Phase 6)
+  Kanimambo.Testing/                    shared test host and JWT helpers
 docs/
   patterns/                   one document per pattern
   adr/                        architecture decision records
@@ -118,7 +135,8 @@ Prerequisites: [.NET SDK 10.0.402+](https://dotnet.microsoft.com/download) and D
 needs **no real credentials**: every external gateway runs as a local simulator.
 
 ```bash
-# Run everything (PostgreSQL, Redis, API) with the Aspire dashboard
+# Run everything (PostgreSQL, Redis, simulators, API) with the Aspire dashboard.
+# In Development the database is migrated and seeded with demo sellers in Maputo, Matola, Beira and Nampula.
 dotnet run --project src/Kanimambo.AppHost --launch-profile http
 
 # API reference (Scalar) while the AppHost runs
@@ -128,6 +146,37 @@ open http://localhost:5080/scalar
 dotnet tool restore
 dotnet build Kanimambo.slnx
 dotnet test --solution Kanimambo.slnx
+```
+
+### A short tour of the Catalog
+
+```bash
+API=http://localhost:5080
+
+# Specification: groceries in stock, 500–2000 MZN (USD/ZAR prices converted), delivered to Matola, rating ≥ 4
+curl "$API/api/catalog/products?inStock=true&category=mercearia&deliversTo=Matola&minSellerRating=4&minPrice=500&maxPrice=2000"
+
+# Composite: "Cabaz Família" (a bundle containing a bundle) with derived stock and IVA per tax category
+curl "$API/api/catalog/products/01920000-0000-7000-9000-0000000000c2"
+
+# Template Method + Iterator: import the wholesaler's paginated API into a seller's catalog
+curl -X POST "$API/api/catalog/sellers/01920000-0000-7000-8000-000000000002/imports/wholesaler"
+
+# Command: back-office operations need a token with the backoffice role (ADR 0005).
+# Run this once, then restart the API so it picks up the signing key:
+TOKEN=$(dotnet user-jwts create --project src/Kanimambo.Api --name ana.backoffice --role backoffice --output token)
+curl -X POST "$API/api/catalog/backoffice/sellers/01920000-0000-7000-8000-000000000005/price-adjustments" \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"percentage": 8, "reason": "Rand appreciation"}'
+curl "$API/api/catalog/backoffice/operations" -H "Authorization: Bearer $TOKEN"     # audit log
+curl -X POST "$API/api/catalog/backoffice/operations/<id>/undo" -H "Authorization: Bearer $TOKEN"
+```
+
+Benchmarks:
+
+```bash
+dotnet run -c Release --project tests/Kanimambo.Benchmarks -- --filter "*Flyweight*"
+dotnet run -c Release --project tests/Kanimambo.Benchmarks -- --retained
 ```
 
 Tests run on Microsoft.Testing.Platform (xUnit v3). To collect coverage:
@@ -142,7 +191,7 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 | Phase | Scope |
 |---|---|
 | 0 ✅ | Foundations: solution, Aspire, SharedKernel, Mediator, Specification base, API host, CI, architecture tests |
-| 1 | Catalog: Composite, Flyweight, Specification, Iterator, Template Method, Command, Proxy |
+| 1 ✅ | Catalog: Composite, Flyweight, Specification, Iterator, Template Method, Command, Proxy |
 | 2 | Cart & Promotions: Memento, Null Object, Interpreter |
 | 3 | Ordering & Checkout: State, Chain of Responsibility, Prototype, Facade, Observer + outbox |
 | 4 | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |

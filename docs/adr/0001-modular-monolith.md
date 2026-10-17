@@ -23,6 +23,9 @@ big ball of mud.
   `ApiControllerBase` and the idempotency attributes. Module `*.Api` projects can't reference the host
   (the host references them), and the SharedKernel must stay free of ASP.NET because every Domain
   project references it.
+- **Shared EF plumbing lives in `Kanimambo.SharedKernel.Infrastructure`.** `AddModuleDbContext<T>` registers a
+  module's DbContext in its own schema, together with its keyed `IUnitOfWork` and `IInboxStore`, and
+  marks it for migration at startup.
 - **The rules are enforced by `Kanimambo.ArchitectureTests`.** They discover module assemblies by
   name (`Kanimambo.<Module>.<Layer>`), so each new module is covered automatically.
 

@@ -50,8 +50,8 @@ jobs:
           -reports:"TestResults/*.cobertura.xml"
           -targetdir:TestResults/report
           -reporttypes:"MarkdownSummaryGithub;Cobertura;HtmlInline"
-          -assemblyfilters:"+Kanimambo.*;-*Tests;-Kanimambo.AppHost"
-          -classfilters:"-*.Migrations.*;-Microsoft.AspNetCore.OpenApi.Generated*;-System.Runtime.CompilerServices*"
+          -assemblyfilters:"+Kanimambo.*;-*Tests;-Kanimambo.AppHost;-Kanimambo.Testing;-Kanimambo.Simulators.*"
+          -classfilters:"-*.Migrations.*;-Microsoft.AspNetCore.OpenApi.Generated*;-System.Runtime.CompilerServices*;-System.Text.RegularExpressions.Generated*"
 
       - name: Publish coverage summary
         if: always()
