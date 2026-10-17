@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kanimambo.Api/Kanimambo.Api.csproj" />
+    <Project Path="src/Kanimambo.AppHost/Kanimambo.AppHost.csproj" />
+    <Project Path="src/Kanimambo.ServiceDefaults/Kanimambo.ServiceDefaults.csproj" />
+    <Project Path="src/Kanimambo.SharedKernel.Web/Kanimambo.SharedKernel.Web.csproj" />
+    <Project Path="src/Kanimambo.SharedKernel/Kanimambo.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kanimambo.Api.IntegrationTests/Kanimambo.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Kanimambo.ArchitectureTests/Kanimambo.ArchitectureTests.csproj" />
+    <Project Path="tests/Kanimambo.SharedKernel.UnitTests/Kanimambo.SharedKernel.UnitTests.csproj" />
+  </Folder>
+</Solution>

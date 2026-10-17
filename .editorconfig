@@ -1,0 +1,42 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,props,targets,csproj,slnx,xml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_prefer_primary_constructors = true:suggestion
+dotnet_sort_system_directives_first = true
+
+# This is a C#-only code base: names such as Error / Result are intentional domain vocabulary.
+dotnet_diagnostic.CA1716.severity = none
+# Static factories on generic result types (Result<T>.Success) are the idiomatic API.
+dotnet_diagnostic.CA1000.severity = none
+# ASP.NET Core has no SynchronizationContext; ConfigureAwait(false) is noise in this app.
+dotnet_diagnostic.CA2007.severity = none
+
+[tests/**.cs]
+# Test method names use Given_When_Then underscores.
+dotnet_diagnostic.CA1707.severity = none
+# Test classes must be public for xUnit.
+dotnet_diagnostic.CA1515.severity = none
+# Test literals do not need culture-aware overloads or resource strings.
+dotnet_diagnostic.CA1303.severity = none
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA2000.severity = none
+
+[**/Migrations/*.cs]
+generated_code = true
