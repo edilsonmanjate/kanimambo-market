@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Kanimambo.Payments.Infrastructure.Gateways.Adapters;
+using Kanimambo.SharedKernel.Infrastructure.Webhooks;
 using Kanimambo.Simulators.MobileMoney;
 using Microsoft.Extensions.DependencyInjection;
 using static Kanimambo.Payments.IntegrationTests.Journey;
@@ -194,7 +195,7 @@ public sealed class MobileMoneyPaymentTests(PaymentsApiFactory factory)
         };
         if (signature is not null)
         {
-            request.Headers.Add(CallbackSignature.Header, signature);
+            request.Headers.Add(WebhookSignature.Header, signature);
         }
 
         var response = await factory.CreateClient().SendAsync(request, Ct);
@@ -219,7 +220,7 @@ public sealed class MobileMoneyPaymentTests(PaymentsApiFactory factory)
         {
             Content = new StringContent(body, Encoding.UTF8, "application/json"),
         };
-        request.Headers.Add(CallbackSignature.Header, CallbackSignature.Sign(body, "dev-mpesa-callback-secret"));
+        request.Headers.Add(WebhookSignature.Header, WebhookSignature.Sign(body, "dev-mpesa-callback-secret"));
 
         var response = await factory.CreateClient().SendAsync(request, Ct);
 
