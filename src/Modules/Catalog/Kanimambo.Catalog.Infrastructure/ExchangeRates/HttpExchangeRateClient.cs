@@ -27,7 +27,7 @@ internal sealed class HttpExchangeRateClient(IHttpClientFactory httpClientFactor
 {
     public const string HttpClientName = "exchange-rates";
 
-    public async Task<Result<ExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken)
+    public async Task<Result<IExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(from);
         ArgumentNullException.ThrowIfNull(to);
@@ -50,7 +50,7 @@ internal sealed class HttpExchangeRateClient(IHttpClientFactory httpClientFactor
 
             var body = await response.Content.ReadFromJsonAsync<ExchangeRateResponse>(cancellationToken);
             return body is { Rate: > 0m }
-                ? new ExchangeRate(from, to, date, body.Rate)
+                ? Result.Success<IExchangeRate>(new ExchangeRate(from, to, date, body.Rate))
                 : Error.Unavailable("exchange_rate.upstream_invalid", "The exchange-rate API returned no rate.");
         }
         catch (HttpRequestException exception)

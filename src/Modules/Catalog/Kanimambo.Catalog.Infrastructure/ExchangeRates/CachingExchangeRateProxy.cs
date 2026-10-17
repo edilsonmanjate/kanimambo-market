@@ -30,16 +30,16 @@ internal sealed partial class CachingExchangeRateProxy(
 {
     private static readonly TimeSpan PastRateLifetime = TimeSpan.FromDays(7);
 
-    private readonly ConcurrentDictionary<string, Lazy<Task<Result<ExchangeRate>>>> _inFlight = new();
+    private readonly ConcurrentDictionary<string, Lazy<Task<Result<IExchangeRate>>>> _inFlight = new();
 
-    public async Task<Result<ExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken)
+    public async Task<Result<IExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(from);
         ArgumentNullException.ThrowIfNull(to);
 
         if (from == to)
         {
-            return new ExchangeRate(from, to, date, 1m);
+            return Result.Success<IExchangeRate>(NoExchangeRate.For(from));
         }
 
         var key = string.Create(CultureInfo.InvariantCulture, $"fx:{from.Code}:{to.Code}:{date:yyyy-MM-dd}");
@@ -47,10 +47,10 @@ internal sealed partial class CachingExchangeRateProxy(
         var cached = await cache.GetStringAsync(key, cancellationToken);
         if (decimal.TryParse(cached, NumberStyles.Number, CultureInfo.InvariantCulture, out var cachedRate))
         {
-            return new ExchangeRate(from, to, date, cachedRate);
+            return Result.Success<IExchangeRate>(new ExchangeRate(from, to, date, cachedRate));
         }
 
-        var fetch = _inFlight.GetOrAdd(key, _ => new Lazy<Task<Result<ExchangeRate>>>(() => FetchAndCacheAsync(from, to, date, key)));
+        var fetch = _inFlight.GetOrAdd(key, _ => new Lazy<Task<Result<IExchangeRate>>>(() => FetchAndCacheAsync(from, to, date, key)));
         try
         {
             return await fetch.Value.WaitAsync(cancellationToken);
@@ -65,7 +65,7 @@ internal sealed partial class CachingExchangeRateProxy(
     }
 
     // Shared by every waiting caller, so it is not tied to any single caller's cancellation token.
-    private async Task<Result<ExchangeRate>> FetchAndCacheAsync(Currency from, Currency to, DateOnly date, string key)
+    private async Task<Result<IExchangeRate>> FetchAndCacheAsync(Currency from, Currency to, DateOnly date, string key)
     {
         using var lease = upstreamLimiter.AttemptAcquire();
         if (!lease.IsAcquired)

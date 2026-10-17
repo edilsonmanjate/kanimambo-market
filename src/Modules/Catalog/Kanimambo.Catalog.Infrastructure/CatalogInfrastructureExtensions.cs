@@ -3,6 +3,8 @@ using Kanimambo.Catalog.Application;
 using Kanimambo.Catalog.Application.Abstractions;
 using Kanimambo.Catalog.Application.Backoffice;
 using Kanimambo.Catalog.Application.Imports;
+using Kanimambo.Catalog.Contracts;
+using Kanimambo.Catalog.Infrastructure.Contracts;
 using Kanimambo.Catalog.Infrastructure.ExchangeRates;
 using Kanimambo.Catalog.Infrastructure.Imports;
 using Kanimambo.Catalog.Infrastructure.Persistence;
@@ -44,6 +46,10 @@ public static class CatalogInfrastructureExtensions
         services.AddScoped<IBackofficeOperationLog, BackofficeOperationLog>();
         services.AddScoped<BackofficeContext>();
         services.AddScoped<BackofficeInvoker>();
+
+        // Public contracts consumed by other modules (Cart, Ordering, ...).
+        services.AddScoped<ICatalogReader, CatalogReader>();
+        services.AddScoped<ICurrencyConverter, CurrencyConverter>();
 
         services.AddOptions<TaxRatesOptions>()
             .Bind(builder.Configuration.GetSection(TaxRatesOptions.SectionName))

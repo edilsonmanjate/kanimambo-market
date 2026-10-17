@@ -3,7 +3,7 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Application.Abstractions;
 
-public sealed record ExchangeRate(Currency From, Currency To, DateOnly Date, decimal Rate)
+public sealed record ExchangeRate(Currency From, Currency To, DateOnly Date, decimal Rate) : IExchangeRate
 {
     public Money Convert(Money amount)
     {
@@ -23,7 +23,7 @@ public sealed record ExchangeRate(Currency From, Currency To, DateOnly Date, dec
 /// </summary>
 public interface IExchangeRateProvider
 {
-    Task<Result<ExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken);
+    Task<Result<IExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken);
 }
 
 public static class ExchangeRateProviderExtensions

@@ -6,4 +6,6 @@ public interface ICurrentActor
     string Name { get; }
 
     bool IsAuthenticated { get; }
+
+    bool IsInRole(string role);
 }

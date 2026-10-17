@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanimambo.Catalog.Application\Kanimambo.Catalog.Application.csproj" />
+    <ProjectReference Include="..\Kanimambo.Catalog.Contracts\Kanimambo.Catalog.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Kanimambo.SharedKernel.Infrastructure\Kanimambo.SharedKernel.Infrastructure.csproj" />
   </ItemGroup>
 
