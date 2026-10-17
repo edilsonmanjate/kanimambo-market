@@ -9,6 +9,9 @@ using Kanimambo.Cart.Infrastructure;
 using Kanimambo.Catalog.Api.Controllers;
 using Kanimambo.Catalog.Application;
 using Kanimambo.Catalog.Infrastructure;
+using Kanimambo.Ordering.Api.Controllers;
+using Kanimambo.Ordering.Application;
+using Kanimambo.Ordering.Infrastructure;
 using Kanimambo.Promotions.Api.Controllers;
 using Kanimambo.Promotions.Application;
 using Kanimambo.Promotions.Infrastructure;
@@ -31,16 +34,19 @@ builder.Services.AddIdempotency(builder.Configuration);
 builder.AddCatalogModule();
 builder.AddPromotionsModule();
 builder.AddCartModule();
+builder.AddOrderingModule();
 builder.Services.AddKanimamboControllers()
     .AddApplicationPart(typeof(CatalogController).Assembly)
     .AddApplicationPart(typeof(PromotionsController).Assembly)
-    .AddApplicationPart(typeof(CartsController).Assembly);
+    .AddApplicationPart(typeof(CartsController).Assembly)
+    .AddApplicationPart(typeof(CheckoutController).Assembly);
 
 // Behaviors run in registration order (first = outermost).
 builder.Services.AddMediator(mediator => mediator
     .AddModule(CatalogModule.Name, typeof(CatalogModule).Assembly)
     .AddModule(PromotionsModule.Name, typeof(PromotionsModule).Assembly)
     .AddModule(CartModule.Name, typeof(CartModule).Assembly)
+    .AddModule(OrderingModule.Name, typeof(OrderingModule).Assembly)
     .AddBehavior(typeof(LoggingBehavior<,>))
     .AddBehavior(typeof(ValidationBehavior<,>))
     .AddBehavior(typeof(UnitOfWorkBehavior<,>))

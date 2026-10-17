@@ -24,6 +24,8 @@
     <ProjectReference Include="..\Modules\Promotions\Kanimambo.Promotions.Infrastructure\Kanimambo.Promotions.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules\Cart\Kanimambo.Cart.Api\Kanimambo.Cart.Api.csproj" />
     <ProjectReference Include="..\Modules\Cart\Kanimambo.Cart.Infrastructure\Kanimambo.Cart.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Ordering\Kanimambo.Ordering.Api\Kanimambo.Ordering.Api.csproj" />
+    <ProjectReference Include="..\Modules\Ordering\Kanimambo.Ordering.Infrastructure\Kanimambo.Ordering.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

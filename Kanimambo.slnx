@@ -11,6 +11,7 @@
   <Folder Name="/src/Modules/Cart/">
     <Project Path="src/Modules/Cart/Kanimambo.Cart.Api/Kanimambo.Cart.Api.csproj" />
     <Project Path="src/Modules/Cart/Kanimambo.Cart.Application/Kanimambo.Cart.Application.csproj" />
+    <Project Path="src/Modules/Cart/Kanimambo.Cart.Contracts/Kanimambo.Cart.Contracts.csproj" />
     <Project Path="src/Modules/Cart/Kanimambo.Cart.Domain/Kanimambo.Cart.Domain.csproj" />
     <Project Path="src/Modules/Cart/Kanimambo.Cart.Infrastructure/Kanimambo.Cart.Infrastructure.csproj" />
   </Folder>
@@ -20,6 +21,13 @@
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Contracts/Kanimambo.Catalog.Contracts.csproj" />
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Domain/Kanimambo.Catalog.Domain.csproj" />
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Kanimambo.Catalog.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Ordering/">
+    <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Api/Kanimambo.Ordering.Api.csproj" />
+    <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Application/Kanimambo.Ordering.Application.csproj" />
+    <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Contracts/Kanimambo.Ordering.Contracts.csproj" />
+    <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Domain/Kanimambo.Ordering.Domain.csproj" />
+    <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Infrastructure/Kanimambo.Ordering.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Promotions/">
     <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Api/Kanimambo.Promotions.Api.csproj" />
@@ -40,6 +48,8 @@
     <Project Path="tests/Kanimambo.Cart.UnitTests/Kanimambo.Cart.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Catalog.IntegrationTests/Kanimambo.Catalog.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.Catalog.UnitTests/Kanimambo.Catalog.UnitTests.csproj" />
+    <Project Path="tests/Kanimambo.Ordering.IntegrationTests/Kanimambo.Ordering.IntegrationTests.csproj" />
+    <Project Path="tests/Kanimambo.Ordering.UnitTests/Kanimambo.Ordering.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Promotions.IntegrationTests/Kanimambo.Promotions.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.Promotions.UnitTests/Kanimambo.Promotions.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.SharedKernel.UnitTests/Kanimambo.SharedKernel.UnitTests.csproj" />
