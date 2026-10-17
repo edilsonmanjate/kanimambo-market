@@ -67,6 +67,26 @@ public sealed class OrderingDbContext(DbContextOptions<OrderingDbContext> option
                 customer.HasIndex(c => c.Id);
             });
 
+            order.OwnsOne(o => o.Delivery, delivery =>
+            {
+                delivery.Property(d => d.Method).HasColumnName("DeliveryMethod").HasMaxLength(32);
+                delivery.Property(d => d.District).HasColumnName("DeliveryDistrict").HasMaxLength(100);
+                delivery.Property(d => d.PickupPointId).HasColumnName("PickupPointId").HasMaxLength(64);
+                delivery.Property(d => d.EstimatedDelivery).HasColumnName("EstimatedDelivery");
+            });
+            order.Navigation(o => o.Delivery).IsRequired();
+
+            order.OwnsMany(o => o.Parcels, parcel =>
+            {
+                parcel.ToTable("OrderParcels");
+                parcel.WithOwner().HasForeignKey("OrderId");
+                parcel.Property<int>("Id");
+                parcel.HasKey("Id");
+                parcel.Property(p => p.OriginCity).HasMaxLength(100);
+                parcel.Property(p => p.WeightKg).HasPrecision(18, 3);
+            });
+            order.Navigation(o => o.Parcels).HasField("_parcels").UsePropertyAccessMode(PropertyAccessMode.Field);
+
             order.OwnsMany(o => o.Lines, line => MapLine(line, "OrderLines"));
             order.Navigation(o => o.Lines).HasField("_lines").UsePropertyAccessMode(PropertyAccessMode.Field);
 

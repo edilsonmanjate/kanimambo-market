@@ -47,15 +47,6 @@ public interface IOrderNumbers
     Task<long> NextAsync(CancellationToken cancellationToken);
 }
 
-/// <summary>
-/// Shipping cost for an order. Phase 3 uses a configured flat fee per city; Phase 5 replaces it with the
-/// Shipping module (Strategy: same-day by zone, inter-provincial by weight, pickup point).
-/// </summary>
-public interface IShippingQuoter
-{
-    Task<Result<Money>> QuoteAsync(string deliveryCity, decimal weightKg, IReadOnlyCollection<Guid> sellerIds, CancellationToken cancellationToken);
-}
-
 /// <summary>Limits per phone number in a rolling 24 h window. Values come from configuration.</summary>
 public sealed record AntiFraudSettings(int MaxOrdersPerPhonePerDay, decimal MaxValuePerPhonePerDayMzn);
 

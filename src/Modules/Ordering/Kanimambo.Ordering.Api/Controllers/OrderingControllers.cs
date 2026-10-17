@@ -11,9 +11,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kanimambo.Ordering.Api.Controllers;
 
-public sealed record CheckoutRequest(Guid CartId, PaymentMethod PaymentMethod, string Phone, string? Nuit);
+/// <summary>Checkout input. Delivery is optional: <c>deliveryMethod</c> is SameDay, Courier or Pickup (see GET /api/shipping/options).</summary>
+public sealed record CheckoutRequest(Guid CartId, PaymentMethod PaymentMethod, string Phone, string? Nuit, string? DeliveryMethod = null, string? DeliveryDistrict = null, string? PickupPointId = null);
 
-public sealed record SubmitDraftRequest(PaymentMethod PaymentMethod, string Phone, string? Nuit);
+public sealed record SubmitDraftRequest(PaymentMethod PaymentMethod, string Phone, string? Nuit, string? DeliveryMethod = null, string? DeliveryDistrict = null, string? PickupPointId = null);
 
 public sealed record StatusChangeRequest(string? Note);
 
@@ -32,7 +33,8 @@ public sealed class CheckoutController(IMediator mediator) : ApiControllerBase
     public async Task<IActionResult> Checkout(CheckoutRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return OkOrProblem(await mediator.Send(new CheckoutCart(request.CartId, request.PaymentMethod, request.Phone, request.Nuit), cancellationToken));
+        return OkOrProblem(await mediator.Send(new CheckoutCart(request.CartId, request.PaymentMethod, request.Phone, request.Nuit,
+            new DeliveryChoice(request.DeliveryMethod, request.DeliveryDistrict, request.PickupPointId)), cancellationToken));
     }
 }
 
@@ -111,6 +113,7 @@ public sealed class OrderDraftsController(IMediator mediator) : ApiControllerBas
     public async Task<IActionResult> Submit(Guid id, SubmitDraftRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return OkOrProblem(await mediator.Send(new SubmitDraftOrder(id, request.PaymentMethod, request.Phone, request.Nuit), cancellationToken));
+        return OkOrProblem(await mediator.Send(new SubmitDraftOrder(id, request.PaymentMethod, request.Phone, request.Nuit,
+            new DeliveryChoice(request.DeliveryMethod, request.DeliveryDistrict, request.PickupPointId)), cancellationToken));
     }
 }

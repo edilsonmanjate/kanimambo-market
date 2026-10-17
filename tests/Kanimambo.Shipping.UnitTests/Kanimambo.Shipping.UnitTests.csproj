@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Shipping\Kanimambo.Shipping.Infrastructure\Kanimambo.Shipping.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

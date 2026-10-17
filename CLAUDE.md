@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 4 (Payments) complete; awaiting approval for Phase 5 (Shipping).
+**Current phase:** Phase 5 (Shipping) complete; awaiting approval for Phase 6 (Invoicing).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -243,7 +243,7 @@ Decisions taken (see `docs/adr/`):
 - Outbox (ADR 0007): `AddModuleDbContext<T>(..., publishesEvents: true)` + a keyed `IIntegrationEventMapper` (key = `typeof(TContext)`). Integration events live in `<Module>.Contracts`; subscribers dispatch an `IIdempotentCommand` keyed by the event id. Processor tracks `DeliveredTo` per subscriber, backoff, dead-letter after `Outbox:MaxAttempts`.
 - Domain events carry the data their subscribers need (no reload in the mapper).
 - Ordering: order ids random v4; numbers from sequence `ordering.OrderNumbers` (KM-1001…); checkout idempotent by (CheckoutSource, CheckoutSourceId) unique index; cash on delivery is paid on Deliver.
-- Interim until Phase 5: `InterimShippingQuoter` (flat fee per city from `Ordering:InterimShipping`). The back-office `transitions/ConfirmPayment` remains for manual confirmations; Ordering integration tests use it, because the default test factory keeps simulated customers from confirming for minutes.
+- The back-office `transitions/ConfirmPayment` and `transitions/Deliver` remain for manual operations. Ordering integration tests use them, because the default test factory keeps simulated customers and couriers idle for minutes.
 - Never name an MVC route parameter `{action}` or `{controller}` (reserved) — it silently 404s.
 - `*.Api` takes enum-like inputs (order action, discount kind) as strings, parsed in Application, to keep Domain types out of the API layer.
 - Cache expirations are relative (`AbsoluteExpirationRelativeToNow`): the cache clock may differ from the injected `TimeProvider`.
@@ -258,3 +258,12 @@ Decisions taken (see `docs/adr/`):
   - **Simulated wire formats are not the official operator APIs.** The callback secrets in appsettings are dev placeholders.
   - **Card payments** use a simulated SIMO acquirer that declines amounts ending in ,99.
   - **Cash on delivery** is never requested; Payments fails it as `UnsupportedMethod`, but Ordering never asks.
+- Shipping (ADR 0009):
+  - **Quotes.** Checkout calls `Shipping.Contracts.IShippingQuoter` with one `ParcelRequest` per seller (origin = `SellerSnapshot.City`). Strategies `SameDay`, `Courier` and `Pickup` are found by name in `ShippingStrategies`. With no method given, `Shipping:DefaultMethods` sets the preference order.
+  - **Configuration.** All prices, zones, vehicles and pickup points live in the `Shipping` section of `appsettings.json`.
+  - **What the order stores.** `OrderDelivery` (method, district, pickup point, ETA) is an owned type. `OrderParcels` has its own table. `Dispatch` raises `OrderDispatched`, which carries the cash to collect for cash-on-delivery orders.
+  - **Consignment.** One `Consignment` per order, with one `Parcel` per seller and `xmin` concurrency (a concurrent webhook gets 409 and the courier retries). Parcel references are `KM-{number}-{n}`, deterministic so courier bookings are idempotent. Parcel status uses a monotonic rank, not State. Delivered at a pickup point means `ReadyForCollection` until staff confirm collection.
+  - **Booking.** Transient courier errors throw, so the outbox retries. Refusals fail the parcel. Courier HttpClients keep the standard resilience handler, which is safe because references are idempotent.
+  - **Fictional couriers.** Txova (same-day) and Mbila (cargo) run in `Kanimambo.Simulators.Courier`. Webhooks go to `POST /api/shipping/webhooks/{courier}`, signed with `WebhookSignature` (moved to `SharedKernel.Infrastructure.Webhooks`, also used by Payments).
+  - **Simulator scenarios.** The recipient phone's last four digits choose them: 0101 absent, 0102 refused, 0103 outage on the first booking.
+  - **Shared test factory.** It routes `courier.test` to the simulator and webhooks back to the API. Its default courier delay is 5 minutes; `ShippingApiFactory` uses 250 ms.

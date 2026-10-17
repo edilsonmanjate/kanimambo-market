@@ -13,7 +13,7 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**19 of 26 patterns implemented** (Adapter covers the payment operators; courier adapters follow in Phase 5).
+**20 of 26 patterns implemented.**
 
 - **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
   **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
@@ -42,6 +42,12 @@ and customers on unstable mobile networks.
   - an asynchronous payment lifecycle with PIN timeouts and late confirmations (**State**);
   - a local mobile-money simulator whose failure scenarios are chosen by the phone number
     ([ADR 0008](docs/adr/0008-asynchronous-mobile-money-payments.md)).
+- **Phase 5 – Shipping:**
+  - delivery priced by interchangeable rules: same-day by zone and vehicle, courier by destination and weight,
+    free pickup points, all from configuration (**Strategy**);
+  - two courier formats behind one gateway, with signed tracking webhooks (**Adapter**);
+  - one parcel per seller, and an order delivered (cash orders paid) when the last parcel arrives
+    ([ADR 0009](docs/adr/0009-shipping-consignments-and-couriers.md)).
 
 ## Design patterns index
 
@@ -59,7 +65,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Memento | Cart snapshots for customers who lose connectivity: restore snapshot N, undo | Cart | 2 | ✅ | [Memento](docs/patterns/Memento.md) |
 | Observer | `OrderPaid` → stock reservation now (invoice, SMS later), delivered through a transactional outbox | Transversal | 3 | ✅ | [Observer](docs/patterns/Observer.md) |
 | State | Order lifecycle (prepaid and cash on delivery) and asynchronous mobile-money payments (PIN, timeout, late confirmation) | Ordering, Payments | 3–4 | ✅ | [State](docs/patterns/State.md) |
-| Strategy | Shipping cost: same-day by zone, inter-provincial by weight, pickup point | Shipping | 5 | ⏳ | — |
+| Strategy | Shipping cost: same-day by zone and vehicle, courier by destination and weight, free pickup points | Shipping | 5 | ✅ | [Strategy](docs/patterns/Strategy.md) |
 | Template Method | Seller catalog imports (CSV, Excel, XML, wholesaler API) with fixed steps and per-format hooks | Catalog | 1 | ✅ | [Template Method](docs/patterns/TemplateMethod.md) |
 | Visitor | Fiscal document tree → e-Declaração CSV/XLSX/XML, invoice PDF, IVA summary | Invoicing | 6 | ⏳ | — |
 
@@ -79,7 +85,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 
 | Pattern | Business problem | Module | Phase | Status | Docs |
 |---|---|---|---|---|---|
-| Adapter | M-Pesa / e-Mola / mKesh (and couriers) behind one gateway with unified errors | Payments, Shipping | 4–5 | 🟡 operators done; couriers in Phase 5 | [Adapter](docs/patterns/Adapter.md) |
+| Adapter | M-Pesa / e-Mola / mKesh and two couriers, each behind one gateway with unified errors | Payments, Shipping | 4–5 | ✅ | [Adapter](docs/patterns/Adapter.md) |
 | Bridge | Message types × channels (SMS ≤160 chars, WhatsApp, e-mail) | Notifications | 7 | ⏳ | — |
 | Composite | Bundles ("cabaz do mês") with recursive price, weight, stock and per-item IVA | Catalog | 1 | ✅ | [Composite](docs/patterns/Composite.md) |
 | Decorator | Logging, metrics, caching of final statuses and business-aware retry around mobile-money gateways | Payments | 4 | ✅ | [Decorator](docs/patterns/Decorator.md) |
@@ -121,15 +127,17 @@ src/
   Modules/Cart/                         {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Ordering/                     {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Payments/                     {Api, Application, Contracts, Domain, Infrastructure}
-  Simulators/                           ExchangeRates, Wholesaler, MobileMoney (later: Courier)
+  Modules/Shipping/                     {Api, Application, Contracts, Domain, Infrastructure}
+  Simulators/                           ExchangeRates, Wholesaler, MobileMoney, Courier
 tests/
   Kanimambo.SharedKernel.UnitTests/
   Kanimambo.Catalog.UnitTests/  Kanimambo.Promotions.UnitTests/  Kanimambo.Cart.UnitTests/  Kanimambo.Ordering.UnitTests/
-  Kanimambo.Payments.UnitTests/
+  Kanimambo.Payments.UnitTests/  Kanimambo.Shipping.UnitTests/
   Kanimambo.Api.IntegrationTests/       WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
   Kanimambo.Catalog.IntegrationTests/   real API + in-process simulators
   Kanimambo.Promotions.IntegrationTests/  Kanimambo.Cart.IntegrationTests/  Kanimambo.Ordering.IntegrationTests/
   Kanimambo.Payments.IntegrationTests/  real API + mobile-money simulator with compressed delays
+  Kanimambo.Shipping.IntegrationTests/  real API + courier simulator with compressed delays
   Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
   Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight; Object Pool in Phase 6)
   Kanimambo.Testing/                    shared test host and JWT helpers
@@ -263,6 +271,34 @@ curl -i -X POST "$API/api/payments/callbacks/mpesa" -H "Content-Type: applicatio
 The Decorator's metrics (`kanimambo.payments.gateway.calls` and `.duration`, per operator and
 outcome) show up in the Aspire dashboard.
 
+### A short tour of Shipping
+
+The courier simulator plays two fictional couriers: Txova Express (same-day riders) and Mbila Cargo
+(inter-provincial). Each one collects the parcel, moves it and delivers it, posting signed webhooks
+a few seconds apart. The last four digits of the recipient's phone number choose the scenario:
+
+| Ends in | Scenario |
+|---|---|
+| `0101` | recipient absent |
+| `0102` | booking refused |
+| `0103` | courier outage on the first booking |
+| anything else | delivered |
+
+```bash
+# Strategy: every delivery option for the cart, cheapest first (district picks the same-day zone)
+curl "$API/api/shipping/options?cartId=$CART&district=KaMavota"
+curl "$API/api/shipping/pickup-points?city=Maputo"
+
+# Checkout with a chosen method (omit it and the first configured method that can deliver is used)
+curl -X POST "$API/api/checkout" -H "Content-Type: application/json" -H "Idempotency-Key: $(uuidgen)" \
+     -d "{\"cartId\":\"$CART\",\"paymentMethod\":\"CashOnDelivery\",\"phone\":\"258841234567\",\"deliveryMethod\":\"SameDay\",\"deliveryDistrict\":\"KaMpfumo\"}"
+
+# Prepare and dispatch (back-office): Shipping books the couriers, and the webhooks then deliver the order
+curl -X POST "$API/api/orders/<orderId>/transitions/StartPreparing" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}'
+curl -X POST "$API/api/orders/<orderId>/transitions/Dispatch" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}'
+curl "$API/api/shipping/consignments?orderId=<orderId>" -H "Authorization: Bearer $TOKEN"   # parcels + tracking
+```
+
 Benchmarks:
 
 ```bash
@@ -286,7 +322,7 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 | 2 ✅ | Cart & Promotions: Memento, Null Object, Interpreter |
 | 3 ✅ | Ordering & Checkout: State, Chain of Responsibility, Prototype, Facade, Observer + outbox |
 | 4 ✅ | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |
-| 5 | Shipping: Strategy, courier Adapter, simulator |
+| 5 ✅ | Shipping: Strategy, courier Adapter, simulator |
 | 6 | Invoicing: Builder, Abstract Factory, Visitor, Object Pool + benchmarks, Singleton |
 | 7 | Notifications: Bridge |
 | 8 | Polish: C4 diagrams, end-to-end `.http` flow, badges, demo |

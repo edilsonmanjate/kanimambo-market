@@ -8,7 +8,7 @@ Turning a cart into an order touches almost every subsystem in the marketplace:
 - **Catalog:** current prices and stock, plus the sellers (delivery cities, minimum order).
 - **Exchange rates:** USD and ZAR lines are charged in MZN.
 - **Promotions:** the best rule for this cart, city, customer type and payment method.
-- **Shipping:** the delivery fee.
+- **Shipping:** one parcel per seller, priced by the method the customer picked (same-day, courier or pickup).
 - **The acceptance chain:** NUIT, stock, delivery zone, anti-fraud, seller minimum.
 - **The order itself:** order number, lines and totals.
 - **Payment:** request it now (mobile money, card) or wait for the courier (cash).
@@ -56,8 +56,10 @@ Payments module picks this up from the outbox: it chooses the operator, sends th
 reports back through a callback (ADR 0008). The facade didn't change when that landed, which is
 the point of having one.
 
-`IShippingQuoter` is still interim: a configured flat fee per city (`Ordering:InterimShipping`) until
-Shipping arrives in Phase 5.
+Shipping works the same way. Since Phase 5 the facade asks the Shipping module through
+`Kanimambo.Shipping.Contracts.IShippingQuoter`, which chooses the delivery Strategy. That replaced a
+flat fee per city, and the facade's interface only gained the optional delivery choice (method,
+district, pickup point).
 
 ## Where in the code
 

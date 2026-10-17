@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using Kanimambo.Simulators.Courier;
 using Kanimambo.Simulators.ExchangeRates;
 using Kanimambo.Simulators.MobileMoney;
 using Kanimambo.Simulators.Wholesaler;
@@ -27,6 +28,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
     private const string ExchangeRatesHost = "exchange-rates.test";
     private const string WholesalerHost = "wholesaler.test";
     private const string MobileMoneyHost = "mobile-money.test";
+    private const string CourierHost = "courier.test";
     private const string ApiHost = "api.test";
 
     private static readonly SymmetricSecurityKey SigningKey =
@@ -35,6 +37,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
     private readonly RedisContainer _redis = new RedisBuilder("redis:7-alpine").Build();
     private WebApplicationFactory<Ledger>? _mobileMoney;
+    private WebApplicationFactory<Waybills>? _courier;
 
     public WebApplicationFactory<RatesController> ExchangeRates { get; } = Simulator<RatesController>("Simulator:LatencyMilliseconds");
 
@@ -55,6 +58,20 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
     protected virtual TimeSpan DelayedCallback => TimeSpan.FromMinutes(10);
 
     protected virtual TimeSpan PinTimeout => TimeSpan.FromMinutes(5);
+
+    /// <summary>Couriers (Txova, Mbila); their tracking webhooks are routed back into this API.</summary>
+    public WebApplicationFactory<Waybills> Courier => _courier ??= new WebApplicationFactory<Waybills>().WithWebHostBuilder(builder =>
+    {
+        var step = ((int)CourierStepDelay.TotalMilliseconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        builder.UseSetting("Simulator:PickupDelayMilliseconds", step);
+        builder.UseSetting("Simulator:TransitDelayMilliseconds", step);
+        builder.UseSetting("Simulator:DeliveryDelayMilliseconds", step);
+        builder.ConfigureTestServices(services => services.AddHttpClient(CourierSimulator.WebhookClient)
+            .ConfigurePrimaryHttpMessageHandler(() => Server.CreateHandler()));
+    });
+
+    /// <summary>Time between courier tracking events. Long by default so tests drive deliveries explicitly.</summary>
+    protected virtual TimeSpan CourierStepDelay => TimeSpan.FromMinutes(5);
 
     public string DatabaseConnectionString => _postgres.GetConnectionString();
 
@@ -105,6 +122,12 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         builder.UseSetting("Payments:PinTimeout", PinTimeout.ToString());
         builder.UseSetting("Payments:TimeoutCheckInterval", "00:00:00.200");
         builder.UseSetting("Payments:GatewayRetryBaseDelay", "00:00:00.050");
+        builder.UseSetting("Shipping:WebhookBaseAddress", $"http://{ApiHost}/");
+        foreach (var courier in new[] { "Txova", "Mbila" })
+        {
+            builder.UseSetting($"Shipping:Couriers:{courier}:BaseAddress", $"http://{CourierHost}/");
+        }
+
         foreach (var op in new[] { "MPesa", "EMola", "MKesh" })
         {
             builder.UseSetting($"Payments:Operators:{op}:BaseAddress", $"http://{MobileMoneyHost}/");
@@ -127,6 +150,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
                     [ExchangeRatesHost] = new(ExchangeRates.Server.CreateHandler()),
                     [WholesalerHost] = new(Wholesaler.Server.CreateHandler()),
                     [MobileMoneyHost] = new(MobileMoney.Server.CreateHandler()),
+                    [CourierHost] = new(Courier.Server.CreateHandler()),
                 })));
 
             ConfigureTestServices(services);
@@ -141,6 +165,11 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         if (_mobileMoney is not null)
         {
             await _mobileMoney.DisposeAsync();
+        }
+
+        if (_courier is not null)
+        {
+            await _courier.DisposeAsync();
         }
 
         await _postgres.DisposeAsync();

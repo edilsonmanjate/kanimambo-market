@@ -4,6 +4,7 @@ using System.Text.Json;
 using Kanimambo.Payments.Application.Gateways;
 using Kanimambo.Payments.Domain;
 using Kanimambo.Payments.Infrastructure.Gateways.Adapters;
+using Kanimambo.SharedKernel.Infrastructure.Webhooks;
 using Kanimambo.SharedKernel.Domain;
 using Kanimambo.SharedKernel.Results;
 
@@ -129,7 +130,7 @@ public sealed class OperatorAdapterTests : IDisposable
     [MemberData(nameof(Callbacks))]
     public void Signed_callbacks_are_translated(string op, string body, GatewayPaymentState state, PaymentFailureReason? reason)
     {
-        var status = Adapter(op).ParseCallback(body, CallbackSignature.Sign(body, Secret));
+        var status = Adapter(op).ParseCallback(body, WebhookSignature.Sign(body, Secret));
 
         status.Value.PaymentId.ShouldBe(PaymentId);
         status.Value.State.ShouldBe(state);
@@ -146,8 +147,8 @@ public sealed class OperatorAdapterTests : IDisposable
         var adapter = Adapter(op);
 
         var unsigned = adapter.ParseCallback(body, null);
-        var forged = adapter.ParseCallback(body, CallbackSignature.Sign(body, "someone-elses-secret"));
-        var tampered = adapter.ParseCallback(body.Replace("SUCCESS", "FAILED", StringComparison.Ordinal), CallbackSignature.Sign(body, Secret));
+        var forged = adapter.ParseCallback(body, WebhookSignature.Sign(body, "someone-elses-secret"));
+        var tampered = adapter.ParseCallback(body.Replace("SUCCESS", "FAILED", StringComparison.Ordinal), WebhookSignature.Sign(body, Secret));
 
         foreach (var result in new[] { unsigned, forged, tampered })
         {

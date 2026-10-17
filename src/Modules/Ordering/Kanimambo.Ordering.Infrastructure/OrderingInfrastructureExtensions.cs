@@ -17,26 +17,6 @@ public sealed class OrderingOptions
     public int MaxOrdersPerPhonePerDay { get; set; } = 5;
 
     public decimal MaxValuePerPhonePerDayMzn { get; set; } = 100_000m;
-
-    public InterimShippingOptions InterimShipping { get; set; } = new();
-}
-
-/// <summary>Flat delivery fee per city until the Shipping module (Phase 5) quotes real costs.</summary>
-public sealed class InterimShippingOptions
-{
-    public decimal DefaultFeeMzn { get; set; } = 450m;
-
-    public Dictionary<string, decimal> FeesByCityMzn { get; } = new(StringComparer.OrdinalIgnoreCase);
-}
-
-internal sealed class InterimShippingQuoter(IOptions<OrderingOptions> options) : IShippingQuoter
-{
-    public Task<Result<Money>> QuoteAsync(string deliveryCity, decimal weightKg, IReadOnlyCollection<Guid> sellerIds, CancellationToken cancellationToken)
-    {
-        var shipping = options.Value.InterimShipping;
-        var fee = shipping.FeesByCityMzn.TryGetValue(deliveryCity, out var cityFee) ? cityFee : shipping.DefaultFeeMzn;
-        return Task.FromResult(Result.Success(Money.Mzn(fee)));
-    }
 }
 
 public static class OrderingInfrastructureExtensions
@@ -60,7 +40,6 @@ public static class OrderingInfrastructureExtensions
         builder.Services.AddScoped<IDraftOrderRepository, DraftOrderRepository>();
         builder.Services.AddScoped<IDraftOrderHistory, DraftOrderHistory>();
         builder.Services.AddScoped<IOrderNumbers, OrderNumbers>();
-        builder.Services.AddScoped<IShippingQuoter, InterimShippingQuoter>();
         builder.Services.AddOrderingApplication();
         return builder;
     }

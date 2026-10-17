@@ -17,6 +17,19 @@ public sealed record OrderPaymentRequested(OrderId OrderId, long Number, int Att
 public sealed record OrderStatusChanged(OrderId OrderId, long Number, string CustomerPhone, OrderStatus From, OrderStatus To, string? Reason, DateTimeOffset OccurredAt)
     : DomainEvent(OccurredAt);
 
+/// <summary>
+/// The order left the sellers: Shipping books a courier per parcel. Carries everything Shipping needs, including the
+/// cash the courier must collect for cash-on-delivery orders (zero otherwise).
+/// </summary>
+public sealed record OrderDispatched(OrderId OrderId, long Number, string DeliveryCity, OrderDelivery Delivery, IReadOnlyList<OrderParcel> Parcels,
+    string CustomerPhone, Money CashToCollect, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
+
+/// <summary>How the customer chose to receive the order, as quoted by Shipping at checkout.</summary>
+public sealed record OrderDelivery(string Method, string? District, string? PickupPointId, DateOnly EstimatedDelivery);
+
+/// <summary>One seller's share of the order, as it will travel: from the seller's city, with this weight.</summary>
+public sealed record OrderParcel(Guid SellerId, string OriginCity, decimal WeightKg);
+
 /// <summary>The amounts of an order, all in MZN: subtotal − promotion + shipping = total.</summary>
 public sealed record OrderTotals(Money Subtotal, string PromotionName, Money Discount, Money ShippingFee)
 {
@@ -31,6 +44,7 @@ public sealed class Order : AggregateRoot<OrderId>
 {
     private readonly List<OrderLine> _lines = [];
     private readonly List<OrderStatusChange> _history = [];
+    private readonly List<OrderParcel> _parcels = [];
     private decimal _subtotal;
     private decimal _discount;
     private decimal _shippingFee;
@@ -40,7 +54,8 @@ public sealed class Order : AggregateRoot<OrderId>
     }
 
     private Order(OrderId id, long number, string checkoutSource, Guid checkoutSourceId, OrderCustomer customer, string deliveryCity,
-        PaymentMethod paymentMethod, IEnumerable<OrderLine> lines, OrderTotals totals, DateTimeOffset now)
+        OrderDelivery delivery, IEnumerable<OrderParcel> parcels, PaymentMethod paymentMethod, IEnumerable<OrderLine> lines, OrderTotals totals,
+        DateTimeOffset now)
         : base(id)
     {
         Number = number;
@@ -48,6 +63,8 @@ public sealed class Order : AggregateRoot<OrderId>
         CheckoutSourceId = checkoutSourceId;
         Customer = customer;
         DeliveryCity = deliveryCity;
+        Delivery = delivery;
+        _parcels.AddRange(parcels);
         PaymentMethod = paymentMethod;
         _lines.AddRange(lines);
         _subtotal = totals.Subtotal.Amount;
@@ -70,6 +87,10 @@ public sealed class Order : AggregateRoot<OrderId>
     public OrderCustomer Customer { get; private set; } = null!;
 
     public string DeliveryCity { get; private set; } = string.Empty;
+
+    public OrderDelivery Delivery { get; private set; } = null!;
+
+    public IReadOnlyList<OrderParcel> Parcels => _parcels.AsReadOnly();
 
     public PaymentMethod PaymentMethod { get; private set; }
 
@@ -107,6 +128,8 @@ public sealed class Order : AggregateRoot<OrderId>
         Guid checkoutSourceId,
         OrderCustomer customer,
         string deliveryCity,
+        OrderDelivery delivery,
+        IReadOnlyCollection<OrderParcel> parcels,
         PaymentMethod paymentMethod,
         IReadOnlyCollection<OrderLine> lines,
         OrderTotals totals,
@@ -115,6 +138,8 @@ public sealed class Order : AggregateRoot<OrderId>
         ArgumentNullException.ThrowIfNull(customer);
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(totals);
+        ArgumentNullException.ThrowIfNull(delivery);
+        ArgumentNullException.ThrowIfNull(parcels);
 
         if (lines.Count == 0)
         {
@@ -127,7 +152,7 @@ public sealed class Order : AggregateRoot<OrderId>
         }
 
         // Placed orders own copies of the lines: later edits to the source draft never reach them.
-        return new Order(id, number, checkoutSource, checkoutSourceId, customer, deliveryCity, paymentMethod,
+        return new Order(id, number, checkoutSource, checkoutSourceId, customer, deliveryCity, delivery, parcels, paymentMethod,
             lines.Select(l => l.DeepClone()), totals, now);
     }
 
@@ -161,6 +186,11 @@ public sealed class Order : AggregateRoot<OrderId>
         {
             PaymentAttempts++;
             Raise(new OrderPaymentRequested(Id, Number, PaymentAttempts, PaymentMethod, Customer.Phone, Totals.Total, now));
+        }
+        else if (next == OrderStatus.OutForDelivery)
+        {
+            Raise(new OrderDispatched(Id, Number, DeliveryCity, Delivery, [.. _parcels], Customer.Phone,
+                PaysOnDelivery ? Totals.Total : Money.Zero(Currency.Mzn), now));
         }
 
         return Result.Success();

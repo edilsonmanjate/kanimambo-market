@@ -1,30 +1,11 @@
 using System.Net.Http.Json;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Kanimambo.Payments.Application.Gateways;
 using Kanimambo.Payments.Domain;
+using Kanimambo.SharedKernel.Infrastructure.Webhooks;
 using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Payments.Infrastructure.Gateways.Adapters;
-
-/// <summary>HMAC-SHA256 signature of a callback body: <c>X-Signature: sha256=&lt;hex&gt;</c>.</summary>
-public static class CallbackSignature
-{
-    public const string Header = "X-Signature";
-
-    public static string Sign(string body, string secret)
-    {
-        ArgumentNullException.ThrowIfNull(body);
-        ArgumentNullException.ThrowIfNull(secret);
-        var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(body));
-        return $"sha256={Convert.ToHexStringLower(hash)}";
-    }
-
-    public static bool IsValid(string body, string? signature, string secret) =>
-        signature is not null
-        && CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(Sign(body, secret)), Encoding.ASCII.GetBytes(signature));
-}
 
 /// <summary>HTTP plumbing shared by the operator adapters; the translation of each format stays in each adapter.</summary>
 internal static class GatewayHttp
@@ -60,7 +41,7 @@ internal static class GatewayHttp
 
     public static Result<T> ParseSigned<T>(string body, string? signature, string secret)
     {
-        if (!CallbackSignature.IsValid(body, signature, secret))
+        if (!WebhookSignature.IsValid(body, signature, secret))
         {
             return Error.Unauthorized("payments.invalid_signature", "The callback signature is not valid.");
         }

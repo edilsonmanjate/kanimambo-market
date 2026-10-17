@@ -7,10 +7,20 @@ using Kanimambo.Promotions.Contracts;
 using Kanimambo.SharedKernel.Domain;
 using Kanimambo.SharedKernel.Identity;
 using Kanimambo.SharedKernel.Results;
+using Kanimambo.Shipping.Contracts;
 
 namespace Kanimambo.Ordering.Application.Checkout;
 
-public sealed record CheckoutDetails(PaymentMethod PaymentMethod, string Phone, string? Nuit);
+/// <summary>
+/// How the customer wants the order delivered. Every part is optional: without a method, Shipping picks the first
+/// configured method that can serve the order (same-day where possible, otherwise courier).
+/// </summary>
+public sealed record DeliveryChoice(string? Method, string? District, string? PickupPointId)
+{
+    public static readonly DeliveryChoice Default = new(null, null, null);
+}
+
+public sealed record CheckoutDetails(PaymentMethod PaymentMethod, string Phone, string? Nuit, DeliveryChoice Delivery);
 
 public sealed record CheckoutResult(
     Guid OrderId,
@@ -22,13 +32,15 @@ public sealed record CheckoutResult(
     decimal Discount,
     decimal ShippingFee,
     decimal Total,
+    string DeliveryMethod,
+    DateOnly EstimatedDelivery,
     string NextStep,
     bool AlreadyPlaced);
 
 /// <summary>
 /// Facade: turning a cart (or a B2B draft) into an order touches seven subsystems — the cart, catalog prices
-/// and sellers, exchange rates, promotions, shipping, the acceptance chain and the order itself, plus payment
-/// and idempotency. Callers see one operation.
+/// and sellers, exchange rates, promotions, shipping quotes (Shipping module), the acceptance chain and the order
+/// itself, plus payment and idempotency. Callers see one operation.
 /// </summary>
 public interface ICheckoutService
 {
@@ -75,7 +87,7 @@ internal sealed class CheckoutService(
 
         var customer = new OrderCustomer(cart.Value.CustomerId, cart.Value.CustomerType, details.Phone.Trim(), details.Nuit?.Trim() ?? string.Empty);
         return await PlaceAsync(CheckoutSources.Cart, cartId, customer, cart.Value.DeliveryCity,
-            [.. cart.Value.Lines.Select(l => new BasketLine(l.ProductId, l.Quantity))], details.PaymentMethod, cancellationToken);
+            [.. cart.Value.Lines.Select(l => new BasketLine(l.ProductId, l.Quantity))], details.PaymentMethod, details.Delivery, cancellationToken);
     }
 
     public async Task<Result<CheckoutResult>> SubmitDraftAsync(Guid draftId, CheckoutDetails details, CancellationToken cancellationToken)
@@ -95,7 +107,7 @@ internal sealed class CheckoutService(
 
         var customer = new OrderCustomer(draft.CustomerId, OrderCustomer.BusinessType, details.Phone.Trim(), details.Nuit?.Trim() ?? string.Empty);
         var placed = await PlaceAsync(CheckoutSources.Draft, draftId, customer, draft.DeliveryCity,
-            [.. draft.Lines.Select(l => new BasketLine(l.ProductId, l.Quantity))], details.PaymentMethod, cancellationToken);
+            [.. draft.Lines.Select(l => new BasketLine(l.ProductId, l.Quantity))], details.PaymentMethod, details.Delivery, cancellationToken);
 
         if (placed.IsSuccess)
         {
@@ -112,6 +124,7 @@ internal sealed class CheckoutService(
         string deliveryCity,
         IReadOnlyList<BasketLine> basket,
         PaymentMethod paymentMethod,
+        DeliveryChoice delivery,
         CancellationToken cancellationToken)
     {
         if (basket.Count == 0)
@@ -153,18 +166,24 @@ internal sealed class CheckoutService(
             subtotal, lines.Sum(l => l.Quantity), [.. lines.Select(l => items[l.ProductId].Category).Distinct()],
             deliveryCity, customer.Type, paymentMethod), cancellationToken);
 
-        // 4. Shipping.
+        // 4. Shipping: one parcel per seller, leaving from the seller's city (Strategy inside the Shipping module).
         var sellerIds = lines.Select(l => l.SellerId).Distinct().ToList();
-        var fee = await shipping.QuoteAsync(deliveryCity, basket.Sum(b => items[b.ProductId].WeightKg * b.Quantity), sellerIds, cancellationToken);
-        if (fee.IsFailure)
+        var sellers = (await catalog.GetSellersAsync(sellerIds, cancellationToken)).ToDictionary(s => s.SellerId);
+        var parcels = sellerIds
+            .Where(sellers.ContainsKey)
+            .Select(id => new OrderParcel(id, sellers[id].City, basket.Where(b => items[b.ProductId].SellerId == id).Sum(b => items[b.ProductId].WeightKg * b.Quantity)))
+            .ToList();
+        var quote = await shipping.QuoteAsync(new ShippingQuoteRequest(deliveryCity, delivery.District, delivery.Method, delivery.PickupPointId,
+            [.. parcels.Select(p => new ParcelRequest(p.SellerId, p.OriginCity, p.WeightKg))]), cancellationToken);
+        if (quote.IsFailure)
         {
-            return fee.Error;
+            return quote.Error;
         }
 
-        var totals = new OrderTotals(subtotal, promotion.Name, promotion.Discount, fee.Value);
+        var totals = new OrderTotals(subtotal, promotion.Name, promotion.Discount, quote.Value.Fee);
+        var orderDelivery = new OrderDelivery(quote.Value.Method, delivery.District, quote.Value.PickupPointId, quote.Value.EstimatedDelivery);
 
         // 5. Acceptance chain (NUIT, stock, delivery zone, anti-fraud, seller minimum).
-        var sellers = (await catalog.GetSellersAsync(sellerIds, cancellationToken)).ToDictionary(s => s.SellerId);
         var accepted = await acceptance.AcceptAsync(new OrderAcceptanceContext(
             customer, deliveryCity, paymentMethod,
             [.. lines.Select(l => new AcceptanceLine(l.ProductId, l.SellerId, l.Sku, l.Quantity, items[l.ProductId].AvailableStock, l.LineTotal))],
@@ -176,7 +195,8 @@ internal sealed class CheckoutService(
 
         // 6. The order.
         var now = timeProvider.GetUtcNow();
-        var order = Order.Place(OrderId.New(), await numbers.NextAsync(cancellationToken), source, sourceId, customer, deliveryCity, paymentMethod, lines, totals, now);
+        var order = Order.Place(OrderId.New(), await numbers.NextAsync(cancellationToken), source, sourceId, customer, deliveryCity, orderDelivery, parcels,
+            paymentMethod, lines, totals, now);
         if (order.IsFailure)
         {
             return order.Error;
@@ -201,6 +221,6 @@ internal sealed class CheckoutService(
 
         return new CheckoutResult(order.Id.Value, order.Number, order.DisplayNumber, order.Status.ToString(),
             totals.Subtotal.Amount, totals.PromotionName, totals.Discount.Amount, totals.ShippingFee.Amount, totals.Total.Amount,
-            nextStep, alreadyPlaced);
+            order.Delivery.Method, order.Delivery.EstimatedDelivery, nextStep, alreadyPlaced);
     }
 }

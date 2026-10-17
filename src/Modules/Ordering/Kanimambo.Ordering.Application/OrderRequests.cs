@@ -28,6 +28,10 @@ public sealed record OrderDto(
     decimal Discount,
     decimal ShippingFee,
     decimal Total,
+    string DeliveryMethod,
+    string? DeliveryDistrict,
+    string? PickupPointId,
+    DateOnly EstimatedDelivery,
     DateTimeOffset PlacedAt,
     IReadOnlyList<OrderStatusChangeDto> History)
 {
@@ -38,7 +42,8 @@ public sealed record OrderDto(
         return new OrderDto(order.Id.Value, order.Number, order.DisplayNumber, order.Status.ToString(),
             [.. order.AllowedActions.Select(a => a.ToString())], order.Customer.Type, order.DeliveryCity, order.PaymentMethod.ToString(),
             order.PaymentReference, [.. order.Lines.Select(Line)], totals.Subtotal.Amount, totals.PromotionName, totals.Discount.Amount,
-            totals.ShippingFee.Amount, totals.Total.Amount, order.PlacedAt,
+            totals.ShippingFee.Amount, totals.Total.Amount, order.Delivery.Method, order.Delivery.District, order.Delivery.PickupPointId,
+            order.Delivery.EstimatedDelivery, order.PlacedAt,
             [.. order.History.Select(h => new OrderStatusChangeDto(h.From.ToString(), h.To.ToString(), h.At, h.Reason))]);
     }
 
@@ -55,9 +60,9 @@ public sealed record DraftOrderDto(Guid Id, Guid SourceOrderId, int Version, str
 }
 
 /// <summary>Checkout a cart. Retried requests return the same order (see <see cref="CheckoutResult.AlreadyPlaced"/>).</summary>
-public sealed record CheckoutCart(Guid CartId, PaymentMethod PaymentMethod, string Phone, string? Nuit) : ICommand<CheckoutResult>;
+public sealed record CheckoutCart(Guid CartId, PaymentMethod PaymentMethod, string Phone, string? Nuit, DeliveryChoice? Delivery = null) : ICommand<CheckoutResult>;
 
-public sealed record SubmitDraftOrder(Guid DraftId, PaymentMethod PaymentMethod, string Phone, string? Nuit) : ICommand<CheckoutResult>;
+public sealed record SubmitDraftOrder(Guid DraftId, PaymentMethod PaymentMethod, string Phone, string? Nuit, DeliveryChoice? Delivery = null) : ICommand<CheckoutResult>;
 
 public sealed record GetOrder(Guid OrderId) : IQuery<OrderDto>;
 
@@ -105,10 +110,10 @@ public sealed class CheckoutHandlers(ICheckoutService checkout) :
     IRequestHandler<SubmitDraftOrder, Result<CheckoutResult>>
 {
     public async ValueTask<Result<CheckoutResult>> Handle(CheckoutCart request, CancellationToken cancellationToken) =>
-        await checkout.CheckoutCartAsync(request.CartId, new CheckoutDetails(request.PaymentMethod, request.Phone, request.Nuit), cancellationToken);
+        await checkout.CheckoutCartAsync(request.CartId, new CheckoutDetails(request.PaymentMethod, request.Phone, request.Nuit, request.Delivery ?? DeliveryChoice.Default), cancellationToken);
 
     public async ValueTask<Result<CheckoutResult>> Handle(SubmitDraftOrder request, CancellationToken cancellationToken) =>
-        await checkout.SubmitDraftAsync(request.DraftId, new CheckoutDetails(request.PaymentMethod, request.Phone, request.Nuit), cancellationToken);
+        await checkout.SubmitDraftAsync(request.DraftId, new CheckoutDetails(request.PaymentMethod, request.Phone, request.Nuit, request.Delivery ?? DeliveryChoice.Default), cancellationToken);
 }
 
 public sealed class OrderHandlers(IOrderRepository orders, ICurrentActor actor, TimeProvider timeProvider) :
