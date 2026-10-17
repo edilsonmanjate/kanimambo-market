@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Ordering.Domain\Kanimambo.Ordering.Domain.csproj" />
+    <ProjectReference Include="..\Kanimambo.Ordering.Contracts\Kanimambo.Ordering.Contracts.csproj" />
+    <!-- The checkout facade coordinates other modules through their public contracts only. -->
+    <ProjectReference Include="..\..\Cart\Kanimambo.Cart.Contracts\Kanimambo.Cart.Contracts.csproj" />
+    <ProjectReference Include="..\..\Catalog\Kanimambo.Catalog.Contracts\Kanimambo.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\Promotions\Kanimambo.Promotions.Contracts\Kanimambo.Promotions.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kanimambo.Ordering.UnitTests" />
+  </ItemGroup>
+
+</Project>

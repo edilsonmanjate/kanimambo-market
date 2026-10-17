@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Ordering.Application\Kanimambo.Ordering.Application.csproj" />
+    <ProjectReference Include="..\..\..\Kanimambo.SharedKernel.Infrastructure\Kanimambo.SharedKernel.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kanimambo.Ordering.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

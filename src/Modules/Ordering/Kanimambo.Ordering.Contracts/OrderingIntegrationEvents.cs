@@ -1,0 +1,50 @@
+using Kanimambo.SharedKernel.Messaging;
+
+namespace Kanimambo.Ordering.Contracts;
+
+/// <summary>Where an order came from: a shopping cart or a B2B draft (reorder).</summary>
+public static class CheckoutSources
+{
+    public const string Cart = "cart";
+    public const string Draft = "draft";
+}
+
+public sealed record OrderLineContract(Guid ProductId, Guid SellerId, string Sku, string Name, int Quantity, decimal LineTotalMzn);
+
+/// <summary>An order was accepted. The Cart module closes the cart it came from.</summary>
+public sealed record OrderPlacedIntegrationEvent(
+    Guid EventId,
+    DateTimeOffset OccurredAt,
+    Guid OrderId,
+    long OrderNumber,
+    string CheckoutSource,
+    Guid CheckoutSourceId,
+    string CustomerId,
+    decimal TotalMzn) : IIntegrationEvent;
+
+/// <summary>
+/// An order was paid (mobile money / card confirmation, or cash collected on delivery). Subscribers:
+/// stock reservation (Catalog) today; invoice issuing (Invoicing, Phase 6) and SMS to the customer and the
+/// seller (Notifications, Phase 7) subscribe to the same event without Ordering knowing about them.
+/// </summary>
+public sealed record OrderPaidIntegrationEvent(
+    Guid EventId,
+    DateTimeOffset OccurredAt,
+    Guid OrderId,
+    long OrderNumber,
+    string CustomerId,
+    string CustomerPhone,
+    string PaymentMethod,
+    decimal TotalMzn,
+    IReadOnlyList<OrderLineContract> Lines) : IIntegrationEvent;
+
+/// <summary>Every lifecycle change, for tracking and customer notifications.</summary>
+public sealed record OrderStatusChangedIntegrationEvent(
+    Guid EventId,
+    DateTimeOffset OccurredAt,
+    Guid OrderId,
+    long OrderNumber,
+    string CustomerPhone,
+    string From,
+    string To,
+    string? Reason) : IIntegrationEvent;

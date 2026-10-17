@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Ordering.Application\Kanimambo.Ordering.Application.csproj" />
+    <ProjectReference Include="..\..\..\Kanimambo.SharedKernel.Web\Kanimambo.SharedKernel.Web.csproj" />
+  </ItemGroup>
+
+</Project>
