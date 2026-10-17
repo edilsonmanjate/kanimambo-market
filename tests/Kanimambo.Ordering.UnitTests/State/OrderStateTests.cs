@@ -21,6 +21,7 @@ public sealed class OrderStateTests
         [(S.AwaitingPayment, A.Cancel)] = S.Cancelled,
         [(S.PaymentFailed, A.RetryPayment)] = S.AwaitingPayment,
         [(S.PaymentFailed, A.Cancel)] = S.Cancelled,
+        [(S.PaymentFailed, A.ConfirmPayment)] = S.Paid, // late confirmation after a timeout
         [(S.Paid, A.StartPreparing)] = S.Preparing,
         [(S.Paid, A.Refund)] = S.Refunded,
         [(S.Preparing, A.Dispatch)] = S.OutForDelivery,
