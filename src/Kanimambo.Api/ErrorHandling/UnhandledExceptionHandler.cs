@@ -1,6 +1,7 @@
 using Kanimambo.SharedKernel.Web;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kanimambo.Api.ErrorHandling;
 
@@ -17,6 +18,7 @@ internal sealed partial class UnhandledExceptionHandler(
         var (status, title, code) = exception switch
         {
             BadHttpRequestException badRequest => (badRequest.StatusCode, "The request is malformed.", "request.malformed"),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Someone else changed this resource at the same time. Reload and retry.", "concurrency.conflict"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.", "server.unexpected_error"),
         };
 

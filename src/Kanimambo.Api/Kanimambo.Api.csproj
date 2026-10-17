@@ -20,6 +20,10 @@
     <ProjectReference Include="..\Kanimambo.SharedKernel.Infrastructure\Kanimambo.SharedKernel.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Kanimambo.Catalog.Api\Kanimambo.Catalog.Api.csproj" />
     <ProjectReference Include="..\Modules\Catalog\Kanimambo.Catalog.Infrastructure\Kanimambo.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Promotions\Kanimambo.Promotions.Api\Kanimambo.Promotions.Api.csproj" />
+    <ProjectReference Include="..\Modules\Promotions\Kanimambo.Promotions.Infrastructure\Kanimambo.Promotions.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Cart\Kanimambo.Cart.Api\Kanimambo.Cart.Api.csproj" />
+    <ProjectReference Include="..\Modules\Cart\Kanimambo.Cart.Infrastructure\Kanimambo.Cart.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

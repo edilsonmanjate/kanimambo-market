@@ -8,11 +8,25 @@
     <Project Path="src/Kanimambo.SharedKernel/Kanimambo.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Cart/">
+    <Project Path="src/Modules/Cart/Kanimambo.Cart.Api/Kanimambo.Cart.Api.csproj" />
+    <Project Path="src/Modules/Cart/Kanimambo.Cart.Application/Kanimambo.Cart.Application.csproj" />
+    <Project Path="src/Modules/Cart/Kanimambo.Cart.Domain/Kanimambo.Cart.Domain.csproj" />
+    <Project Path="src/Modules/Cart/Kanimambo.Cart.Infrastructure/Kanimambo.Cart.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Catalog/">
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Api/Kanimambo.Catalog.Api.csproj" />
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Application/Kanimambo.Catalog.Application.csproj" />
+    <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Contracts/Kanimambo.Catalog.Contracts.csproj" />
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Domain/Kanimambo.Catalog.Domain.csproj" />
     <Project Path="src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Kanimambo.Catalog.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Promotions/">
+    <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Api/Kanimambo.Promotions.Api.csproj" />
+    <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Application/Kanimambo.Promotions.Application.csproj" />
+    <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Contracts/Kanimambo.Promotions.Contracts.csproj" />
+    <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Domain/Kanimambo.Promotions.Domain.csproj" />
+    <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Infrastructure/Kanimambo.Promotions.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Simulators/">
     <Project Path="src/Simulators/Kanimambo.Simulators.ExchangeRates/Kanimambo.Simulators.ExchangeRates.csproj" />
@@ -22,8 +36,12 @@
     <Project Path="tests/Kanimambo.Api.IntegrationTests/Kanimambo.Api.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.ArchitectureTests/Kanimambo.ArchitectureTests.csproj" />
     <Project Path="tests/Kanimambo.Benchmarks/Kanimambo.Benchmarks.csproj" />
+    <Project Path="tests/Kanimambo.Cart.IntegrationTests/Kanimambo.Cart.IntegrationTests.csproj" />
+    <Project Path="tests/Kanimambo.Cart.UnitTests/Kanimambo.Cart.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Catalog.IntegrationTests/Kanimambo.Catalog.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.Catalog.UnitTests/Kanimambo.Catalog.UnitTests.csproj" />
+    <Project Path="tests/Kanimambo.Promotions.IntegrationTests/Kanimambo.Promotions.IntegrationTests.csproj" />
+    <Project Path="tests/Kanimambo.Promotions.UnitTests/Kanimambo.Promotions.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.SharedKernel.UnitTests/Kanimambo.SharedKernel.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Testing/Kanimambo.Testing.csproj" />
   </Folder>

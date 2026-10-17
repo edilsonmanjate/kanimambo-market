@@ -3,9 +3,15 @@ using Kanimambo.Api.ErrorHandling;
 using Kanimambo.Api.Idempotency;
 using Kanimambo.Api.Persistence;
 using Kanimambo.Api.Security;
+using Kanimambo.Cart.Api.Controllers;
+using Kanimambo.Cart.Application;
+using Kanimambo.Cart.Infrastructure;
 using Kanimambo.Catalog.Api.Controllers;
 using Kanimambo.Catalog.Application;
 using Kanimambo.Catalog.Infrastructure;
+using Kanimambo.Promotions.Api.Controllers;
+using Kanimambo.Promotions.Application;
+using Kanimambo.Promotions.Infrastructure;
 using Kanimambo.SharedKernel.Messaging;
 using Kanimambo.SharedKernel.Messaging.Behaviors;
 using Scalar.AspNetCore;
@@ -23,12 +29,18 @@ builder.Services.AddIdempotency(builder.Configuration);
 
 // Modules: each contributes its controllers (application part), handlers (Mediator) and infrastructure.
 builder.AddCatalogModule();
+builder.AddPromotionsModule();
+builder.AddCartModule();
 builder.Services.AddKanimamboControllers()
-    .AddApplicationPart(typeof(CatalogController).Assembly);
+    .AddApplicationPart(typeof(CatalogController).Assembly)
+    .AddApplicationPart(typeof(PromotionsController).Assembly)
+    .AddApplicationPart(typeof(CartsController).Assembly);
 
 // Behaviors run in registration order (first = outermost).
 builder.Services.AddMediator(mediator => mediator
     .AddModule(CatalogModule.Name, typeof(CatalogModule).Assembly)
+    .AddModule(PromotionsModule.Name, typeof(PromotionsModule).Assembly)
+    .AddModule(CartModule.Name, typeof(CartModule).Assembly)
     .AddBehavior(typeof(LoggingBehavior<,>))
     .AddBehavior(typeof(ValidationBehavior<,>))
     .AddBehavior(typeof(UnitOfWorkBehavior<,>))
