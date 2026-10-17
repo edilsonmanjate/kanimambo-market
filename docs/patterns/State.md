@@ -49,6 +49,7 @@ stateDiagram-v2
     AwaitingPayment --> Cancelled: Cancel
     PaymentFailed --> AwaitingPayment: RetryPayment
     PaymentFailed --> Cancelled: Cancel
+    PaymentFailed --> Paid: ConfirmPayment (late confirmation)
     Paid --> Preparing: StartPreparing
     Paid --> Refunded: Refund
     Preparing --> OutForDelivery: Dispatch
@@ -60,8 +61,40 @@ stateDiagram-v2
     Refunded --> [*]
 ```
 
-The mobile-money payment lifecycle (`Initiated → AwaitingCustomerPin → Confirmed / Failed / TimedOut`)
-gets its own states in Phase 4 (Payments).
+`PaymentFailed → Paid` handles a **late confirmation**. The customer typed the PIN after the payment
+timed out, and the operator did take the money, so the order counts as paid. Failures from an older
+attempt are ignored once the customer has retried.
+
+### Payment lifecycle (Payments)
+
+A mobile-money payment is asynchronous:
+
+1. the operator accepts the request and pushes a PIN prompt;
+2. the customer confirms on the phone, or not;
+3. the result arrives later by callback, or never arrives.
+
+`PaymentState` applies the same technique to this lifecycle:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Initiated
+    Initiated --> AwaitingCustomerPin: operator accepted (PIN prompt sent)
+    Initiated --> Failed: refused upfront (unknown prefix, duplicate, invalid number…)
+    AwaitingCustomerPin --> Confirmed: callback / status = confirmed
+    AwaitingCustomerPin --> Failed: callback / status = failed (e.g. insufficient balance)
+    AwaitingCustomerPin --> TimedOut: PIN deadline passed and the operator still says pending
+    TimedOut --> Confirmed: late callback (the money was taken)
+    Confirmed --> [*]
+    Failed --> [*]
+```
+
+- **Timeouts.** `PaymentTimeoutMonitor` sends `ExpirePendingPayments` every
+  `Payments:TimeoutCheckInterval`. Before timing a payment out, it asks the operator for the status
+  once more, because the callback may simply have been lost.
+- **Duplicates.** Duplicate and out-of-order callbacks are refused by the state, acknowledged with 204
+  (so the operator stops retrying), and logged.
+- **Retries.** Every retry is a new `Payment` with the next attempt number, unique per
+  (order, attempt). The history of each attempt stays intact.
 
 ## Where in the code
 
@@ -69,7 +102,15 @@ gets its own states in Phase 4 (Payments).
 - [Order.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/Order.cs) (context)
 - [OrderRequests.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/OrderRequests.cs)
   (`ChangeOrderStatus`)
-- `POST /api/orders/{id}/transitions/{transition}` (back-office) and `POST /api/orders/{id}/cancel` (owner)
+- `POST /api/orders/{id}/transitions/{transition}` (back-office), and `POST /api/orders/{id}/cancel`
+  and `POST /api/orders/{id}/retry-payment` (owner)
+- Payments:
+  - [PaymentStates.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/PaymentStates.cs) (states)
+  - [Payment.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/Payment.cs) (context)
+  - `PaymentTimeoutMonitor` in
+    [PaymentsInfrastructure.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/PaymentsInfrastructure.cs)
+- Payment outcomes reach Ordering through the outbox:
+  [PaymentOutcomes.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Payments/PaymentOutcomes.cs)
 
 ## Tests
 
@@ -83,6 +124,17 @@ gets its own states in Phase 4 (Payments).
 - [LifecycleAndOutboxTests](../../tests/Kanimambo.Ordering.IntegrationTests/LifecycleAndOutboxTests.cs)
   cover the full cash-on-delivery flow over HTTP, and an invalid transition returning
   `409 ordering.invalid_transition`.
+- [PaymentStateTests](../../tests/Kanimambo.Payments.UnitTests/State/PaymentStateTests.cs) are exhaustive
+  as well: 5 statuses × 4 actions, plus the events raised on confirmation, failure and timeout.
+- [MobileMoneyPaymentTests](../../tests/Kanimambo.Payments.IntegrationTests/MobileMoneyPaymentTests.cs)
+  drive the payment states through the simulator:
+  - confirmed;
+  - insufficient balance;
+  - duplicate;
+  - no answer leading to `TimedOut`;
+  - a delayed callback, where the order goes `AwaitingPayment → PaymentFailed → Paid` and the payment
+    goes `AwaitingCustomerPin → TimedOut → Confirmed`;
+  - a retried payment.
 
 ## Trade-offs & when NOT to use
 

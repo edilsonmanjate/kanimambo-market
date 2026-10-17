@@ -51,13 +51,13 @@ flowchart LR
     f -. OrderPlaced via outbox .-> cartModule[Cart module closes the cart]
 ```
 
-Until Phases 4 and 5 land, two collaborators are deliberately interim:
+The last step, "request payment", only moves the order to `AwaitingPayment`. Since Phase 4 the
+Payments module picks this up from the outbox: it chooses the operator, sends the PIN prompt and
+reports back through a callback (ADR 0008). The facade didn't change when that landed, which is
+the point of having one.
 
-- `IShippingQuoter` uses a configured flat fee per city (`Ordering:InterimShipping`).
-- Payment confirmation comes from a back-office transition, which Phase 4 replaces with gateway
-  callbacks.
-
-The facade's interface stays the same when they are replaced.
+`IShippingQuoter` is still interim: a configured flat fee per city (`Ordering:InterimShipping`) until
+Shipping arrives in Phase 5.
 
 ## Where in the code
 

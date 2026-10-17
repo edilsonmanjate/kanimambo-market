@@ -13,7 +13,7 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**16 of 26 patterns implemented** (plus State for orders; the payment states follow in Phase 4).
+**19 of 26 patterns implemented** (Adapter covers the payment operators; courier adapters follow in Phase 5).
 
 - **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
   **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
@@ -35,6 +35,13 @@ and customers on unstable mobile networks.
   - B2B reorders cloned from last week (**Prototype**);
   - one checkout operation over nine subsystems (**Facade**);
   - events delivered to other modules through a transactional outbox with per-subscriber retry (**Observer**).
+- **Phase 4 – Payments:**
+  - the payment processor chosen by phone prefix: 84/85 M-Pesa, 86/87 e-Mola, 82/83 mKesh (**Factory Method**);
+  - three operator formats behind one gateway with unified errors and signed callbacks (**Adapter**);
+  - logging, metrics, caching of final statuses and business-aware retry around every operator (**Decorator**);
+  - an asynchronous payment lifecycle with PIN timeouts and late confirmations (**State**);
+  - a local mobile-money simulator whose failure scenarios are chosen by the phone number
+    ([ADR 0008](docs/adr/0008-asynchronous-mobile-money-payments.md)).
 
 ## Design patterns index
 
@@ -51,7 +58,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Mediator | In-process dispatch of commands/queries/notifications with ordered pipeline behaviors | SharedKernel | 0 | ✅ | [Mediator](docs/patterns/Mediator.md) |
 | Memento | Cart snapshots for customers who lose connectivity: restore snapshot N, undo | Cart | 2 | ✅ | [Memento](docs/patterns/Memento.md) |
 | Observer | `OrderPaid` → stock reservation now (invoice, SMS later), delivered through a transactional outbox | Transversal | 3 | ✅ | [Observer](docs/patterns/Observer.md) |
-| State | Order lifecycle (prepaid and cash on delivery); mobile-money payment lifecycle in Phase 4 | Ordering, Payments | 3–4 | 🟡 orders done; payments in Phase 4 | [State](docs/patterns/State.md) |
+| State | Order lifecycle (prepaid and cash on delivery) and asynchronous mobile-money payments (PIN, timeout, late confirmation) | Ordering, Payments | 3–4 | ✅ | [State](docs/patterns/State.md) |
 | Strategy | Shipping cost: same-day by zone, inter-provincial by weight, pickup point | Shipping | 5 | ⏳ | — |
 | Template Method | Seller catalog imports (CSV, Excel, XML, wholesaler API) with fixed steps and per-format hooks | Catalog | 1 | ✅ | [Template Method](docs/patterns/TemplateMethod.md) |
 | Visitor | Fiscal document tree → e-Declaração CSV/XLSX/XML, invoice PDF, IVA summary | Invoicing | 6 | ⏳ | — |
@@ -62,7 +69,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 |---|---|---|---|---|---|
 | Abstract Factory | Coherent component families per tax regime (IVA normal vs ISPC) | Invoicing | 6 | ⏳ | — |
 | Builder | Always-valid `Invoice` (NUITs, series, sequence, exemptions, MZN totals) | Invoicing | 6 | ⏳ | — |
-| Factory Method | Payment processor by phone prefix (84/85 M-Pesa, 86/87 e-Mola, 82/83 mKesh) | Payments | 4 | ⏳ | — |
+| Factory Method | Payment processor by phone prefix (84/85 M-Pesa, 86/87 e-Mola, 82/83 mKesh, from configuration) | Payments | 4 | ✅ | [Factory Method](docs/patterns/FactoryMethod.md) |
 | Null Object | `GuestCustomer`, `NoPromotion`, `NoExchangeRate` remove null checks from cart pricing | Cart, Promotions | 2 | ✅ | [Null Object](docs/patterns/NullObject.md) |
 | Object Pool | Reusing buffers for bulk PDF / QR / monthly AT file generation | Invoicing | 6 | ⏳ | — |
 | Prototype | Weekly B2B reorders deep-cloned from the previous order, then adjusted (with undo) | Ordering | 3 | ✅ | [Prototype](docs/patterns/Prototype.md) |
@@ -72,10 +79,10 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 
 | Pattern | Business problem | Module | Phase | Status | Docs |
 |---|---|---|---|---|---|
-| Adapter | M-Pesa / e-Mola / mKesh (and couriers) behind one gateway with unified errors | Payments, Shipping | 4–5 | ⏳ | — |
+| Adapter | M-Pesa / e-Mola / mKesh (and couriers) behind one gateway with unified errors | Payments, Shipping | 4–5 | 🟡 operators done; couriers in Phase 5 | [Adapter](docs/patterns/Adapter.md) |
 | Bridge | Message types × channels (SMS ≤160 chars, WhatsApp, e-mail) | Notifications | 7 | ⏳ | — |
 | Composite | Bundles ("cabaz do mês") with recursive price, weight, stock and per-item IVA | Catalog | 1 | ✅ | [Composite](docs/patterns/Composite.md) |
-| Decorator | Caching, retry, logging and metrics around repositories and HTTP clients | Infra | 4 | ⏳ | — |
+| Decorator | Logging, metrics, caching of final statuses and business-aware retry around mobile-money gateways | Payments | 4 | ✅ | [Decorator](docs/patterns/Decorator.md) |
 | Facade | `CheckoutService` orchestrating cart, prices, rates, promotions, shipping, acceptance, order, payment, idempotency | Ordering | 3 | ✅ | [Facade](docs/patterns/Facade.md) |
 | Flyweight | 100k product variants sharing interned immutable attributes (−52% retained memory) | Catalog | 1 | ✅ | [Flyweight](docs/patterns/Flyweight.md) |
 | Proxy | Cache + rate limit in front of a slow USD/ZAR → MZN exchange-rate API | Catalog | 1 | ✅ | [Proxy](docs/patterns/Proxy.md) |
@@ -113,13 +120,16 @@ src/
   Modules/Promotions/                   {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Cart/                         {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Ordering/                     {Api, Application, Contracts, Domain, Infrastructure}
-  Simulators/                           ExchangeRates, Wholesaler (later: MobileMoney, Courier)
+  Modules/Payments/                     {Api, Application, Contracts, Domain, Infrastructure}
+  Simulators/                           ExchangeRates, Wholesaler, MobileMoney (later: Courier)
 tests/
   Kanimambo.SharedKernel.UnitTests/
   Kanimambo.Catalog.UnitTests/  Kanimambo.Promotions.UnitTests/  Kanimambo.Cart.UnitTests/  Kanimambo.Ordering.UnitTests/
+  Kanimambo.Payments.UnitTests/
   Kanimambo.Api.IntegrationTests/       WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
   Kanimambo.Catalog.IntegrationTests/   real API + in-process simulators
   Kanimambo.Promotions.IntegrationTests/  Kanimambo.Cart.IntegrationTests/  Kanimambo.Ordering.IntegrationTests/
+  Kanimambo.Payments.IntegrationTests/  real API + mobile-money simulator with compressed delays
   Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
   Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight; Object Pool in Phase 6)
   Kanimambo.Testing/                    shared test host and JWT helpers
@@ -210,13 +220,48 @@ curl -X POST "$API/api/promotions/rules/validate" -H "Authorization: Bearer $TOK
 curl -X POST "$API/api/checkout" -H "Content-Type: application/json" -H "Idempotency-Key: $(uuidgen)" \
      -d "{\"cartId\":\"$CART\",\"paymentMethod\":\"MPesa\",\"phone\":\"258841234567\"}"
 
-# State: confirm the payment (back-office, until the Payments module in Phase 4); the outbox then reserves stock
+# State: the order is now AwaitingPayment and the Payments module collects it (see the next tour).
+# The back-office can still confirm a payment manually; the outbox then reserves stock
 curl -X POST "$API/api/orders/<orderId>/transitions/ConfirmPayment" -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" -d '{"note":"MP-REF-123"}'
 
 # Prototype: B2B reorder of last week (token with the b2b role)
 curl -X POST "$API/api/orders/<orderId>/reorder" -H "Authorization: Bearer $B2B_TOKEN"
 ```
+
+### A short tour of Payments
+
+The mobile-money simulator plays the customer. It "types the PIN" after 3 s and calls the API back with
+a signed callback. The last four digits of the phone number choose the scenario:
+
+| Ends in | Scenario |
+|---|---|
+| `0001` | insufficient balance |
+| `0002` | duplicate |
+| `0003` | no answer (times out after 60 s) |
+| `0004` | late confirmation, after the timeout |
+| `0005` | invalid number |
+| `0006` | operator outage |
+| anything else | success |
+
+```bash
+# Factory Method + Adapter: prefix 84 → M-Pesa. A few seconds later the order is Paid and stock is reserved
+curl -X POST "$API/api/checkout" -H "Content-Type: application/json" -H "Idempotency-Key: $(uuidgen)" \
+     -d "{\"cartId\":\"$CART\",\"paymentMethod\":\"MPesa\",\"phone\":\"258841234567\"}"
+curl "$API/api/orders/<orderId>"
+
+# State: every attempt with its lifecycle and the operator's native code (back-office)
+curl "$API/api/payments?orderId=<orderId>" -H "Authorization: Bearer $TOKEN"
+
+# A number with no balance (…0001) fails the payment; the order's owner can retry it
+curl -X POST "$API/api/orders/<orderId>/retry-payment" -H "Authorization: Bearer $CUSTOMER_TOKEN"
+
+# Adapter: callbacks without a valid X-Signature are rejected with 401
+curl -i -X POST "$API/api/payments/callbacks/mpesa" -H "Content-Type: application/json" -d '{}'
+```
+
+The Decorator's metrics (`kanimambo.payments.gateway.calls` and `.duration`, per operator and
+outcome) show up in the Aspire dashboard.
 
 Benchmarks:
 
@@ -240,7 +285,7 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 | 1 ✅ | Catalog: Composite, Flyweight, Specification, Iterator, Template Method, Command, Proxy |
 | 2 ✅ | Cart & Promotions: Memento, Null Object, Interpreter |
 | 3 ✅ | Ordering & Checkout: State, Chain of Responsibility, Prototype, Facade, Observer + outbox |
-| 4 | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |
+| 4 ✅ | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |
 | 5 | Shipping: Strategy, courier Adapter, simulator |
 | 6 | Invoicing: Builder, Abstract Factory, Visitor, Object Pool + benchmarks, Singleton |
 | 7 | Notifications: Bridge |
