@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 3 (Ordering & Checkout) complete; awaiting approval for Phase 4 (Payments).
+**Current phase:** Phase 4 (Payments) complete; awaiting approval for Phase 5 (Shipping).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -243,7 +243,18 @@ Decisions taken (see `docs/adr/`):
 - Outbox (ADR 0007): `AddModuleDbContext<T>(..., publishesEvents: true)` + a keyed `IIntegrationEventMapper` (key = `typeof(TContext)`). Integration events live in `<Module>.Contracts`; subscribers dispatch an `IIdempotentCommand` keyed by the event id. Processor tracks `DeliveredTo` per subscriber, backoff, dead-letter after `Outbox:MaxAttempts`.
 - Domain events carry the data their subscribers need (no reload in the mapper).
 - Ordering: order ids random v4; numbers from sequence `ordering.OrderNumbers` (KM-1001…); checkout idempotent by (CheckoutSource, CheckoutSourceId) unique index; cash on delivery is paid on Deliver.
-- Interim until Phase 4/5: `InterimShippingQuoter` (flat fee per city from `Ordering:InterimShipping`) and payment confirmation via `POST /api/orders/{id}/transitions/ConfirmPayment` (back-office).
+- Interim until Phase 5: `InterimShippingQuoter` (flat fee per city from `Ordering:InterimShipping`). The back-office `transitions/ConfirmPayment` remains for manual confirmations; Ordering integration tests use it, because the default test factory keeps simulated customers from confirming for minutes.
 - Never name an MVC route parameter `{action}` or `{controller}` (reserved) — it silently 404s.
 - `*.Api` takes enum-like inputs (order action, discount kind) as strings, parsed in Application, to keep Domain types out of the API layer.
 - Cache expirations are relative (`AbsoluteExpirationRelativeToNow`): the cache clock may differ from the injected `TimeProvider`.
+- Payments (ADR 0008):
+  - **Payment records.** One `Payment` per (OrderId, Attempt), with a unique index. Our payment id is the operator reference.
+  - **Event flow.** Ordering raises `OrderPaymentRequested` when it enters AwaitingPayment, which increments `Order.PaymentAttempts`. Payments publishes `PaymentConfirmed` / `PaymentFailed` through its own outbox. Ordering ignores failures from older attempts. A late confirmation, PaymentFailed → Paid, is allowed.
+  - **Callbacks.** They arrive at `POST /api/payments/callbacks/{operator}`, anonymous with an `X-Signature` HMAC. Invalid signatures get 401. Duplicate or out-of-order callbacks get 204 and are ignored.
+  - **Decorator chain.** It is composed in `AddGateway`: Logging → Metrics → Caching (final statuses only) → Retry (transient `GatewayError` only) → Adapter.
+  - **No generic HTTP resilience on operator clients.** They opt out with `RemoveAllResilienceHandlers()` (scoped EXTEXP0001 suppression), so it can't stack retries under the decorator. An integration test (outage scenario `0006`) guards this.
+  - **Simulator scenarios** are picked by the phone's last four digits: 0001 insufficient, 0002 duplicate, 0003 no answer, 0004 delayed callback, 0005 invalid, 0006 outage. Test phones must avoid those suffixes; `NewPhone()` uses ≥1000.
+  - **Shared test factory.** It routes `mobile-money.test` to the simulator and the simulator's `callbacks` client back to the API TestServer. Delays default to minutes (tests drive payments manually); `PaymentsApiFactory` compresses them (300 ms PIN, 2 s timeout, 4 s late callback).
+  - **Simulated wire formats are not the official operator APIs.** The callback secrets in appsettings are dev placeholders.
+  - **Card payments** use a simulated SIMO acquirer that declines amounts ending in ,99.
+  - **Cash on delivery** is never requested; Payments fails it as `UnsupportedMethod`, but Ordering never asks.

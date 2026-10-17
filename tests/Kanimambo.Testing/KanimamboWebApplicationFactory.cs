@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using Kanimambo.Simulators.ExchangeRates;
+using Kanimambo.Simulators.MobileMoney;
 using Kanimambo.Simulators.Wholesaler;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
@@ -25,16 +26,35 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
 {
     private const string ExchangeRatesHost = "exchange-rates.test";
     private const string WholesalerHost = "wholesaler.test";
+    private const string MobileMoneyHost = "mobile-money.test";
+    private const string ApiHost = "api.test";
 
     private static readonly SymmetricSecurityKey SigningKey =
         new(Encoding.UTF8.GetBytes("kanimambo-integration-tests-signing-key-not-a-secret"));
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
     private readonly RedisContainer _redis = new RedisBuilder("redis:7-alpine").Build();
+    private WebApplicationFactory<Ledger>? _mobileMoney;
 
     public WebApplicationFactory<RatesController> ExchangeRates { get; } = Simulator<RatesController>("Simulator:LatencyMilliseconds");
 
     public WebApplicationFactory<ProductsController> Wholesaler { get; } = Simulator<ProductsController>("Simulator:LatencyMillisecondsPerPage");
+
+    /// <summary>Mobile-money operators; their callbacks are routed back into this API.</summary>
+    public WebApplicationFactory<Ledger> MobileMoney => _mobileMoney ??= new WebApplicationFactory<Ledger>().WithWebHostBuilder(builder =>
+    {
+        builder.UseSetting("Simulator:ConfirmationDelayMilliseconds", ((int)CustomerConfirmationDelay.TotalMilliseconds).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.UseSetting("Simulator:DelayedCallbackMilliseconds", ((int)DelayedCallback.TotalMilliseconds).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.ConfigureTestServices(services => services.AddHttpClient(MobileMoneySimulator.CallbackClient)
+            .ConfigurePrimaryHttpMessageHandler(() => Server.CreateHandler()));
+    });
+
+    /// <summary>How long the simulated customer takes to type the PIN. Long by default so tests drive payments explicitly.</summary>
+    protected virtual TimeSpan CustomerConfirmationDelay => TimeSpan.FromMinutes(5);
+
+    protected virtual TimeSpan DelayedCallback => TimeSpan.FromMinutes(10);
+
+    protected virtual TimeSpan PinTimeout => TimeSpan.FromMinutes(5);
 
     public string DatabaseConnectionString => _postgres.GetConnectionString();
 
@@ -81,6 +101,14 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         builder.UseSetting("Promotions:SeedDemoData", "true");
         builder.UseSetting("Catalog:ExchangeRates:BaseAddress", $"http://{ExchangeRatesHost}/");
         builder.UseSetting("Catalog:Wholesaler:BaseAddress", $"http://{WholesalerHost}/");
+        builder.UseSetting("Payments:CallbackBaseAddress", $"http://{ApiHost}/");
+        builder.UseSetting("Payments:PinTimeout", PinTimeout.ToString());
+        builder.UseSetting("Payments:TimeoutCheckInterval", "00:00:00.200");
+        builder.UseSetting("Payments:GatewayRetryBaseDelay", "00:00:00.050");
+        foreach (var op in new[] { "MPesa", "EMola", "MKesh" })
+        {
+            builder.UseSetting($"Payments:Operators:{op}:BaseAddress", $"http://{MobileMoneyHost}/");
+        }
 
         builder.ConfigureTestServices(services =>
         {
@@ -98,6 +126,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
                 {
                     [ExchangeRatesHost] = new(ExchangeRates.Server.CreateHandler()),
                     [WholesalerHost] = new(Wholesaler.Server.CreateHandler()),
+                    [MobileMoneyHost] = new(MobileMoney.Server.CreateHandler()),
                 })));
 
             ConfigureTestServices(services);
@@ -109,6 +138,11 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         await base.DisposeAsync();
         await ExchangeRates.DisposeAsync();
         await Wholesaler.DisposeAsync();
+        if (_mobileMoney is not null)
+        {
+            await _mobileMoney.DisposeAsync();
+        }
+
         await _postgres.DisposeAsync();
         await _redis.DisposeAsync();
         GC.SuppressFinalize(this);

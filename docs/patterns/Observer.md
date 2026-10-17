@@ -63,7 +63,16 @@ sequenceDiagram
 ```
 
 Subscribers live in their own modules and depend only on `Kanimambo.Ordering.Contracts`: Catalog for
-stock, Cart for closing the cart. Ordering doesn't know they exist.
+stock, Cart for closing the cart, and Payments for collecting the money. Ordering doesn't know they
+exist.
+
+Events flow both ways without the modules referencing each other's internals:
+
+1. Ordering publishes `OrderPaymentRequested`.
+2. Payments starts collecting, and later publishes `PaymentConfirmed` / `PaymentFailed` from its own
+   outbox.
+3. Ordering subscribes to those through `Kanimambo.Payments.Contracts`, and marks the order paid or
+   failed.
 
 ## Where in the code
 

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Public surface of the Payments module: the payment outcomes other modules subscribe to. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Kanimambo.SharedKernel\Kanimambo.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

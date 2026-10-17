@@ -106,7 +106,8 @@ internal static class Journey
 {
     public static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    public static string NewPhone() => $"25884{Random.Shared.Next(1_000_000, 9_999_999)}";
+    // Last four digits >= 1000: the mobile-money simulator reserves 0001-0005 for failure scenarios.
+    public static string NewPhone() => $"25884{Random.Shared.Next(100, 999)}{Random.Shared.Next(1_000, 9_999)}";
 
     public static async Task<Guid> CartWithAsync(this HttpClient client, string city, params (Guid Product, int Quantity)[] lines)
     {

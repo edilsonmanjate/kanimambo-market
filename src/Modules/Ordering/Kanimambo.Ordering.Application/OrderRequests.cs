@@ -141,8 +141,9 @@ public sealed class OrderHandlers(IOrderRepository orders, ICurrentActor actor, 
         }
 
         var isStaff = actor.IsInRole(KnownRoles.Backoffice);
-        var isOwnerCancelling = action == OrderAction.Cancel && order.Customer.Id.Length > 0 && order.Customer.Id == actor.Name;
-        if (!isStaff && !isOwnerCancelling)
+        var isOwnerAction = action is OrderAction.Cancel or OrderAction.RetryPayment
+            && order.Customer.Id.Length > 0 && order.Customer.Id == actor.Name;
+        if (!isStaff && !isOwnerAction)
         {
             return Error.Forbidden("ordering.staff_only", "Only back-office staff can change this order's status.");
         }

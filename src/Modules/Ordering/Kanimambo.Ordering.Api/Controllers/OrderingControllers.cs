@@ -57,10 +57,17 @@ public sealed class OrdersController(IMediator mediator) : ApiControllerBase
     public async Task<IActionResult> Cancel(Guid id, StatusChangeRequest request, CancellationToken cancellationToken) =>
         OkOrProblem(await mediator.Send(new ChangeOrderStatus(id, "Cancel", request?.Note), cancellationToken));
 
+    /// <summary>After a failed payment (insufficient balance, timeout...), the customer asks for a new payment request.</summary>
+    [Authorize]
+    [HttpPost("{id:guid}/retry-payment")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RetryPayment(Guid id, CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new ChangeOrderStatus(id, "RetryPayment", null), cancellationToken));
+
     /// <summary>
     /// Fulfilment and payment transitions (back-office): RequestPayment, ConfirmPayment (note = gateway reference),
-    /// FailPayment, RetryPayment, StartPreparing, Dispatch, Deliver, Cancel, Refund. Payment confirmations move to
-    /// the Payments module's gateway callbacks in Phase 4.
+    /// FailPayment, RetryPayment, StartPreparing, Dispatch, Deliver, Cancel, Refund. Payments normally arrive from the
+    /// Payments module (gateway callbacks); ConfirmPayment here is the manual reconciliation path.
     /// </summary>
     [Authorize(Policy = AuthorizationPolicies.Backoffice)]
     [HttpPost("{id:guid}/transitions/{transition}")]

@@ -15,6 +15,7 @@
     <ProjectReference Include="..\Kanimambo.Api\Kanimambo.Api.csproj" />
     <ProjectReference Include="..\Simulators\Kanimambo.Simulators.ExchangeRates\Kanimambo.Simulators.ExchangeRates.csproj" />
     <ProjectReference Include="..\Simulators\Kanimambo.Simulators.Wholesaler\Kanimambo.Simulators.Wholesaler.csproj" />
+    <ProjectReference Include="..\Simulators\Kanimambo.Simulators.MobileMoney\Kanimambo.Simulators.MobileMoney.csproj" />
   </ItemGroup>
 
 </Project>

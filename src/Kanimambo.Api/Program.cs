@@ -12,6 +12,9 @@ using Kanimambo.Catalog.Infrastructure;
 using Kanimambo.Ordering.Api.Controllers;
 using Kanimambo.Ordering.Application;
 using Kanimambo.Ordering.Infrastructure;
+using Kanimambo.Payments.Api.Controllers;
+using Kanimambo.Payments.Application;
+using Kanimambo.Payments.Infrastructure;
 using Kanimambo.Promotions.Api.Controllers;
 using Kanimambo.Promotions.Application;
 using Kanimambo.Promotions.Infrastructure;
@@ -35,11 +38,13 @@ builder.AddCatalogModule();
 builder.AddPromotionsModule();
 builder.AddCartModule();
 builder.AddOrderingModule();
+builder.AddPaymentsModule();
 builder.Services.AddKanimamboControllers()
     .AddApplicationPart(typeof(CatalogController).Assembly)
     .AddApplicationPart(typeof(PromotionsController).Assembly)
     .AddApplicationPart(typeof(CartsController).Assembly)
-    .AddApplicationPart(typeof(CheckoutController).Assembly);
+    .AddApplicationPart(typeof(CheckoutController).Assembly)
+    .AddApplicationPart(typeof(PaymentsController).Assembly);
 
 // Behaviors run in registration order (first = outermost).
 builder.Services.AddMediator(mediator => mediator
@@ -47,6 +52,7 @@ builder.Services.AddMediator(mediator => mediator
     .AddModule(PromotionsModule.Name, typeof(PromotionsModule).Assembly)
     .AddModule(CartModule.Name, typeof(CartModule).Assembly)
     .AddModule(OrderingModule.Name, typeof(OrderingModule).Assembly)
+    .AddModule(PaymentsModule.Name, typeof(PaymentsModule).Assembly)
     .AddBehavior(typeof(LoggingBehavior<,>))
     .AddBehavior(typeof(ValidationBehavior<,>))
     .AddBehavior(typeof(UnitOfWorkBehavior<,>))
