@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The API host references every module, so all Kanimambo assemblies land in the output folder. -->
+    <ProjectReference Include="..\..\src\Kanimambo.Api\Kanimambo.Api.csproj" />
+  </ItemGroup>
+
+</Project>
