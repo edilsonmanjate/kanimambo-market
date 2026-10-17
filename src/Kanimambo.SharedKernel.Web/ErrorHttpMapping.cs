@@ -14,6 +14,7 @@ public static class ErrorHttpMapping
         ErrorType.NotFound => StatusCodes.Status404NotFound,
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.BusinessRule => StatusCodes.Status422UnprocessableEntity,
+        ErrorType.Unavailable => StatusCodes.Status503ServiceUnavailable,
         ErrorType.Failure => StatusCodes.Status500InternalServerError,
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unmapped error type."),
     };

@@ -13,4 +13,7 @@ public enum ErrorType
     BusinessRule,
     Unauthorized,
     Forbidden,
+
+    /// <summary>A dependency (gateway, external API) is temporarily unavailable; retrying later may succeed.</summary>
+    Unavailable,
 }

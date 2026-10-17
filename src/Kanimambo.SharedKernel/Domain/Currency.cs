@@ -21,6 +21,8 @@ public sealed record Currency
 
     private Currency(string code) => Code = code;
 
+    public static IReadOnlyList<Currency> Supported { get; } = [Mzn, Usd, Zar];
+
     public string Code { get; }
 
     public static Result<Currency> FromCode(string? code) =>
