@@ -1,13 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="Testcontainers.PostgreSql" />
-    <PackageReference Include="Testcontainers.Redis" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Kanimambo.Api\Kanimambo.Api.csproj" />
+    <ProjectReference Include="..\Kanimambo.Testing\Kanimambo.Testing.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,11 +3,15 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
+    <IsKanimamboTestProject>$(MSBuildProjectName.EndsWith('Tests'))</IsKanimamboTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsKanimamboTestProject)' == 'true'">
     <OutputType>Exe</OutputType>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsKanimamboTestProject)' == 'true'">
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <PackageReference Include="Shouldly" />
@@ -15,7 +19,7 @@
     <PackageReference Include="NSubstitute.Analyzers.CSharp" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsKanimamboTestProject)' == 'true'">
     <Using Include="Xunit" />
     <Using Include="Shouldly" />
   </ItemGroup>

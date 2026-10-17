@@ -45,6 +45,30 @@ public sealed class ModuleRulesTests
     }
 
     [Fact]
+    public void Api_layer_reaches_the_module_only_through_the_application_layer()
+    {
+        foreach (var api in Layer("Api"))
+        {
+            Types.InAssembly(api.Assembly)
+                .ShouldNot().HaveDependencyOnAny([.. InfrastructureFrameworks, .. AllModuleNamespaces("Infrastructure", "Domain")])
+                .GetResult()
+                .ShouldPass($"{api.Module}.Api controllers only send requests through IMediator");
+        }
+    }
+
+    [Fact]
+    public void Every_module_assembly_follows_the_naming_convention_so_rules_cover_it()
+    {
+        var unexpected = KanimamboAssemblies.All
+            .Select(a => a.GetName().Name!)
+            .Where(n => n.Split('.') is [_, var module, _] && module is not "SharedKernel" && !KanimamboAssemblies.Modules.Any(m => m.Assembly.GetName().Name == n))
+            .ToArray();
+
+        unexpected.ShouldBeEmpty("Module assemblies must be named Kanimambo.<Module>.<Domain|Application|Infrastructure|Api|Contracts>");
+        KanimamboAssemblies.ModuleNames.ShouldContain("Catalog");
+    }
+
+    [Fact]
     public void Modules_only_talk_to_each_other_through_contracts()
     {
         foreach (var assembly in KanimamboAssemblies.Modules)
