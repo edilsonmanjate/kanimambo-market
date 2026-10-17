@@ -52,6 +52,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
             seller.Property(s => s.Status).HasConversion<string>().HasMaxLength(16);
             seller.Property(s => s.SuspensionReason).HasMaxLength(500);
             seller.PrimitiveCollection<List<string>>("_deliveryCities").HasColumnName("DeliveryCities");
+            seller.Property<decimal>("_minimumOrderMzn").HasColumnName("MinimumOrderMzn").HasPrecision(18, 2);
+            seller.Ignore(s => s.MinimumOrder);
             seller.Ignore(s => s.DeliveryCities);
             seller.Ignore(s => s.IsActive);
             seller.Ignore(s => s.DomainEvents);

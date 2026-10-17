@@ -19,14 +19,16 @@ public sealed class Seller : AggregateRoot<SellerId>
     public const decimal MaxRating = 5m;
 
     private List<string> _deliveryCities = [];
+    private decimal _minimumOrderMzn;
 
     private Seller()
     {
     }
 
-    private Seller(SellerId id, string name, string city, decimal rating, List<string> deliveryCities)
+    private Seller(SellerId id, string name, string city, decimal rating, List<string> deliveryCities, decimal minimumOrderMzn)
         : base(id)
     {
+        _minimumOrderMzn = minimumOrderMzn;
         Name = name;
         City = city;
         Rating = rating;
@@ -48,7 +50,10 @@ public sealed class Seller : AggregateRoot<SellerId>
 
     public bool IsActive => Status == SellerStatus.Active;
 
-    public static Result<Seller> Register(SellerId id, string name, string city, decimal rating, IEnumerable<string> deliveryCities)
+    /// <summary>Smallest order (in MZN, per seller) the seller accepts; wholesalers typically set one.</summary>
+    public Money MinimumOrder => Money.Mzn(_minimumOrderMzn);
+
+    public static Result<Seller> Register(SellerId id, string name, string city, decimal rating, IEnumerable<string> deliveryCities, decimal minimumOrderMzn = 0m)
     {
         ArgumentNullException.ThrowIfNull(deliveryCities);
 
@@ -68,6 +73,11 @@ public sealed class Seller : AggregateRoot<SellerId>
             errors.Add(new FieldError(nameof(rating), $"Rating must be between 0 and {MaxRating}."));
         }
 
+        if (minimumOrderMzn < 0m)
+        {
+            errors.Add(new FieldError(nameof(minimumOrderMzn), "Minimum order cannot be negative."));
+        }
+
         var cities = deliveryCities
             .Where(c => !string.IsNullOrWhiteSpace(c))
             .Select(c => c.Trim())
@@ -79,7 +89,7 @@ public sealed class Seller : AggregateRoot<SellerId>
             return new ValidationError(errors);
         }
 
-        return new Seller(id, name.Trim(), city.Trim(), rating, cities);
+        return new Seller(id, name.Trim(), city.Trim(), rating, cities, minimumOrderMzn);
     }
 
     public bool DeliversTo(string city) => _deliveryCities.Contains(city, StringComparer.OrdinalIgnoreCase);

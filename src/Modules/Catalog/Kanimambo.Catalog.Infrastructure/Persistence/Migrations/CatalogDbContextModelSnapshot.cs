@@ -224,6 +224,11 @@ namespace Kanimambo.Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("DeliveryCities");
 
+                    b.Property<decimal>("_minimumOrderMzn")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("MinimumOrderMzn");
+
                     b.HasKey("Id");
 
                     b.ToTable("Sellers", "catalog");

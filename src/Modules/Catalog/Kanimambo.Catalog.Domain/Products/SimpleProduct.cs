@@ -78,6 +78,15 @@ public sealed class SimpleProduct : CatalogItem
         return Result.Success();
     }
 
+    /// <summary>Takes units out of stock for a paid order; returns how many could not be covered (oversold).</summary>
+    public int Reserve(int quantity)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(quantity);
+        var reserved = Math.Min(quantity, Stock);
+        Stock -= reserved;
+        return quantity - reserved;
+    }
+
     public override IEnumerable<LeafRequirement> LeafRequirements(int quantity)
     {
         yield return new LeafRequirement(this, quantity);

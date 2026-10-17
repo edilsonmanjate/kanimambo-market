@@ -40,12 +40,12 @@ public static class CatalogSeeder
         }
 
         db.Sellers.AddRange(
-            Seller(MerceariaXipamanine, "Mercearia Xipamanine", "Maputo", 4.6m, "Maputo", "Matola"),
-            Seller(GrossistaMatola, "Grossista da Matola", "Matola", 4.2m, "Matola", "Maputo", "Beira"),
-            Seller(ArmazemChiveve, "Armazém do Chiveve", "Beira", 3.8m, "Beira", "Dondo", "Chimoio"),
-            Seller(CooperativaCajuNampula, "Cooperativa de Caju de Nampula", "Nampula", 4.8m, "Nampula", "Nacala", "Maputo"),
-            Seller(ImportadoraLebombo, "Importadora Lebombo", "Matola", 4.0m, "Matola", "Maputo"),
-            Seller(SolarTech, "SolarTech Moçambique", "Maputo", 4.4m, "Maputo", "Matola", "Beira", "Nampula"));
+            Seller(MerceariaXipamanine, "Mercearia Xipamanine", "Maputo", 4.6m, 300m, "Maputo", "Matola"),
+            Seller(GrossistaMatola, "Grossista da Matola", "Matola", 4.2m, 5_000m, "Matola", "Maputo", "Beira"),
+            Seller(ArmazemChiveve, "Armazém do Chiveve", "Beira", 3.8m, 0m, "Beira", "Dondo", "Chimoio"),
+            Seller(CooperativaCajuNampula, "Cooperativa de Caju de Nampula", "Nampula", 4.8m, 0m, "Nampula", "Nacala", "Maputo"),
+            Seller(ImportadoraLebombo, "Importadora Lebombo", "Matola", 4.0m, 0m, "Matola", "Maputo"),
+            Seller(SolarTech, "SolarTech Moçambique", "Maputo", 4.4m, 0m, "Maputo", "Matola", "Beira", "Nampula"));
 
         var arroz25 = Product(MerceariaXipamanine, "MX-ARROZ-25", "Arroz agulha", "mercearia", "saco", 25, "kg", 1_850m, 40, 25m, "exempt");
         var oleo5 = Product(MerceariaXipamanine, "MX-OLEO-5", "Óleo de cozinha", "mercearia", "bidão", 5, "l", 720m, 60, 4.6m, "standard");
@@ -82,8 +82,8 @@ public static class CatalogSeeder
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    private static Seller Seller(SellerId id, string name, string city, decimal rating, params string[] deliveryCities) =>
-        Domain.Sellers.Seller.Register(id, name, city, rating, deliveryCities).Value;
+    private static Seller Seller(SellerId id, string name, string city, decimal rating, decimal minimumOrderMzn, params string[] deliveryCities) =>
+        Domain.Sellers.Seller.Register(id, name, city, rating, deliveryCities, minimumOrderMzn).Value;
 
     private static SimpleProduct Product(
         SellerId seller, string sku, string name, string category,

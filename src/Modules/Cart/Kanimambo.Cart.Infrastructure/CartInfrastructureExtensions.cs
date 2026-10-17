@@ -14,6 +14,7 @@ public static class CartInfrastructureExtensions
         builder.AddModuleDbContext<CartDbContext>(CartModule.Name, CartDbContext.Schema);
         builder.Services.AddScoped<ICartRepository, CartRepository>();
         builder.Services.AddScoped<ICartHistory, CartHistory>();
+        builder.Services.AddCartContracts();
         return builder;
     }
 }

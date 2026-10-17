@@ -74,6 +74,11 @@ public sealed class ShoppingCart : AggregateRoot<CartId>
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    /// <summary>The order this cart became, once checked out; a checked-out cart can no longer change.</summary>
+    public Guid? CheckedOutOrderId { get; private set; }
+
+    public bool IsCheckedOut => CheckedOutOrderId is not null;
+
     public IReadOnlyList<CartLine> Lines => _lines.AsReadOnly();
 
     public int ItemCount => _lines.Sum(l => l.Quantity);
@@ -89,6 +94,11 @@ public sealed class ShoppingCart : AggregateRoot<CartId>
     /// <summary>Sets the quantity of a product; 0 removes the line.</summary>
     public Result SetQuantity(Guid productId, string sku, string name, int quantity, DateTimeOffset now)
     {
+        if (IsCheckedOut)
+        {
+            return CheckedOut();
+        }
+
         if (quantity is < 0 or > MaxQuantityPerLine)
         {
             return Error.Validation(new FieldError("quantity", $"Quantity must be between 0 and {MaxQuantityPerLine}."));
@@ -120,6 +130,11 @@ public sealed class ShoppingCart : AggregateRoot<CartId>
 
     public Result Remove(Guid productId, DateTimeOffset now)
     {
+        if (IsCheckedOut)
+        {
+            return CheckedOut();
+        }
+
         var removed = _lines.RemoveAll(l => l.ProductId == productId);
         if (removed == 0)
         {
@@ -132,6 +147,11 @@ public sealed class ShoppingCart : AggregateRoot<CartId>
 
     public Result ChangeDeliveryCity(string city, DateTimeOffset now)
     {
+        if (IsCheckedOut)
+        {
+            return CheckedOut();
+        }
+
         if (string.IsNullOrWhiteSpace(city))
         {
             return Error.Validation(new FieldError("deliveryCity", "Delivery city is required."));
@@ -149,6 +169,11 @@ public sealed class ShoppingCart : AggregateRoot<CartId>
     public Result Restore(CartMemento memento, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(memento);
+        if (IsCheckedOut)
+        {
+            return CheckedOut();
+        }
+
         if (memento.Version > Version)
         {
             return Error.BusinessRule("cart.snapshot_from_future", $"Snapshot {memento.Version} is newer than the cart (version {Version}).");
@@ -161,6 +186,27 @@ public sealed class ShoppingCart : AggregateRoot<CartId>
         UpdatedAt = now;
         return Result.Success();
     }
+
+    /// <summary>Closes the cart after its order was placed. Idempotent for the same order.</summary>
+    public Result MarkCheckedOut(Guid orderId, DateTimeOffset now)
+    {
+        if (CheckedOutOrderId == orderId)
+        {
+            return Result.Success();
+        }
+
+        if (IsCheckedOut)
+        {
+            return CheckedOut();
+        }
+
+        CheckedOutOrderId = orderId;
+        UpdatedAt = now;
+        return Result.Success();
+    }
+
+    private Error CheckedOut() =>
+        Error.Conflict("cart.checked_out", $"This cart was already checked out as order {CheckedOutOrderId}.");
 
     private void Touch(DateTimeOffset now)
     {

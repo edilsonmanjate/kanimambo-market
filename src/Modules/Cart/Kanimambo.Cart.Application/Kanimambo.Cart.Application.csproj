@@ -5,6 +5,8 @@
     <!-- Other modules are reached only through their public contracts. -->
     <ProjectReference Include="..\..\Catalog\Kanimambo.Catalog.Contracts\Kanimambo.Catalog.Contracts.csproj" />
     <ProjectReference Include="..\..\Promotions\Kanimambo.Promotions.Contracts\Kanimambo.Promotions.Contracts.csproj" />
+    <ProjectReference Include="..\..\Ordering\Kanimambo.Ordering.Contracts\Kanimambo.Ordering.Contracts.csproj" />
+    <ProjectReference Include="..\Kanimambo.Cart.Contracts\Kanimambo.Cart.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -88,7 +88,8 @@ internal sealed partial class CachingExchangeRateProxy(
         await cache.SetStringAsync(
             key,
             result.Value.Rate.ToString(CultureInfo.InvariantCulture),
-            new DistributedCacheEntryOptions { AbsoluteExpiration = expiresAt },
+            // Relative, so the cache server's clock never has to agree with ours.
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expiresAt - timeProvider.GetUtcNow() },
             CancellationToken.None);
 
         LogFetched(logger, key, result.Value.Rate);

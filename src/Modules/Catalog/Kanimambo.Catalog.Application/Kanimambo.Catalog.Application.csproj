@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanimambo.Catalog.Domain\Kanimambo.Catalog.Domain.csproj" />
+    <!-- Subscribes to Ordering events (stock reservation) through its public contracts only. -->
+    <ProjectReference Include="..\..\Ordering\Kanimambo.Ordering.Contracts\Kanimambo.Ordering.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

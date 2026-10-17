@@ -49,6 +49,7 @@ public sealed class CartDbContext(DbContextOptions<CartDbContext> options) : DbC
             cart.Navigation(c => c.Lines).HasField("_lines").UsePropertyAccessMode(PropertyAccessMode.Field);
             cart.Ignore(c => c.Customer);
             cart.Ignore(c => c.ItemCount);
+            cart.Ignore(c => c.IsCheckedOut);
             cart.Ignore(c => c.DomainEvents);
         });
 
