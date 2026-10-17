@@ -61,8 +61,9 @@ sequenceDiagram
     H->>T: DiscardAfter(3)
 ```
 
-B2B draft orders in Phase 3 (Ordering) will reuse the same shape: the draft as originator, with
-snapshots for back-office undo.
+B2B draft orders (Ordering) reuse the same shape: `DraftOrder` is the originator, `DraftOrderMemento` the
+snapshot, and `POST /api/order-drafts/{id}/undo` lets the customer or the back-office undo an edit (see
+[Prototype](Prototype.md)).
 
 ## Where in the code
 

@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 2 (Cart & Promotions) complete; awaiting approval for Phase 3 (Ordering & Checkout).
+**Current phase:** Phase 3 (Ordering & Checkout) complete; awaiting approval for Phase 4 (Payments).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -240,3 +240,10 @@ Decisions taken (see `docs/adr/`):
 - Role names live in `SharedKernel.Identity.KnownRoles` (`backoffice`, `b2b`); `ICurrentActor.IsInRole`.
 - Npgsql only accepts UTC `DateTimeOffset` for `timestamptz`: never persist Maputo-offset values (use `MozambiqueTime` only for date logic).
 - Shared test factory routes every HttpClient to in-process simulators by host (`SimulatorRouter`); seeds Catalog + Promotions.
+- Outbox (ADR 0007): `AddModuleDbContext<T>(..., publishesEvents: true)` + a keyed `IIntegrationEventMapper` (key = `typeof(TContext)`). Integration events live in `<Module>.Contracts`; subscribers dispatch an `IIdempotentCommand` keyed by the event id. Processor tracks `DeliveredTo` per subscriber, backoff, dead-letter after `Outbox:MaxAttempts`.
+- Domain events carry the data their subscribers need (no reload in the mapper).
+- Ordering: order ids random v4; numbers from sequence `ordering.OrderNumbers` (KM-1001…); checkout idempotent by (CheckoutSource, CheckoutSourceId) unique index; cash on delivery is paid on Deliver.
+- Interim until Phase 4/5: `InterimShippingQuoter` (flat fee per city from `Ordering:InterimShipping`) and payment confirmation via `POST /api/orders/{id}/transitions/ConfirmPayment` (back-office).
+- Never name an MVC route parameter `{action}` or `{controller}` (reserved) — it silently 404s.
+- `*.Api` takes enum-like inputs (order action, discount kind) as strings, parsed in Application, to keep Domain types out of the API layer.
+- Cache expirations are relative (`AbsoluteExpirationRelativeToNow`): the cache clock may differ from the injected `TimeProvider`.
