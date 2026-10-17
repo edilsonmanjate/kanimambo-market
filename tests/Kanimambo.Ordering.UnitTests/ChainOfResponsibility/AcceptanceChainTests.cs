@@ -141,8 +141,8 @@ public sealed class AcceptanceChainTests
             lines ?? [Line(Mercearia, "ARROZ", 1, 10, 1_850m)],
             new Dictionary<Guid, SellerSnapshot>
             {
-                [Mercearia] = new(Mercearia, "Mercearia", true, ["Maputo", "Matola"], Money.Mzn(300m)),
-                [Grossista] = new(Grossista, "Grossista", true, ["Matola", "Maputo"], Money.Mzn(5_000m)),
+                [Mercearia] = new(Mercearia, "Mercearia", true, ["Maputo", "Matola"], Money.Mzn(300m), "Maputo"),
+                [Grossista] = new(Grossista, "Grossista", true, ["Matola", "Maputo"], Money.Mzn(5_000m), "Matola"),
             },
             Money.Mzn(2_000m));
 

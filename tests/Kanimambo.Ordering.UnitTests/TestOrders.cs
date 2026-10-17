@@ -17,7 +17,8 @@ internal static class TestOrders
         var subtotal = orderLines.Select(l => l.LineTotal).Aggregate((a, b) => a + b);
         return Order.Place(OrderId.New(), 1001, "cart", Guid.NewGuid(),
             new OrderCustomer("restaurante-polana", customerType, "258841234567", customerType == "b2b" ? "400123456" : ""),
-            "Maputo", method, orderLines, new OrderTotals(subtotal, "", Money.Zero(Currency.Mzn), Money.Mzn(150m)), Now).Value;
+            "Maputo", new OrderDelivery("SameDay", "KaMpfumo", null, DateOnly.FromDateTime(Now.UtcDateTime)), [new OrderParcel(Seller, "Maputo", 27m)],
+            method, orderLines, new OrderTotals(subtotal, "", Money.Zero(Currency.Mzn), Money.Mzn(150m)), Now).Value;
     }
 
     /// <summary>Applies an action with representative arguments.</summary>
