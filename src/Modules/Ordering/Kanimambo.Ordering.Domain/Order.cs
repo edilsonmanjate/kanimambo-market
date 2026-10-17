@@ -10,6 +10,10 @@ public sealed record OrderPlaced(OrderId OrderId, long Number, string CheckoutSo
 public sealed record OrderPaid(OrderId OrderId, long Number, string PaymentReference, OrderCustomer Customer, PaymentMethod PaymentMethod, Money Total,
     IReadOnlyList<OrderLine> Lines, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
 
+/// <summary>The order waits for a prepaid payment; <paramref name="Attempt"/> starts at 1 and grows with each retry.</summary>
+public sealed record OrderPaymentRequested(OrderId OrderId, long Number, int Attempt, PaymentMethod PaymentMethod, string CustomerPhone, Money Amount, DateTimeOffset OccurredAt)
+    : DomainEvent(OccurredAt);
+
 public sealed record OrderStatusChanged(OrderId OrderId, long Number, string CustomerPhone, OrderStatus From, OrderStatus To, string? Reason, DateTimeOffset OccurredAt)
     : DomainEvent(OccurredAt);
 
@@ -70,6 +74,9 @@ public sealed class Order : AggregateRoot<OrderId>
     public PaymentMethod PaymentMethod { get; private set; }
 
     public string? PaymentReference { get; private set; }
+
+    /// <summary>How many times payment was requested (1 = first request; retries increase it).</summary>
+    public int PaymentAttempts { get; private set; }
 
     public OrderStatus Status { get; private set; }
 
@@ -150,6 +157,12 @@ public sealed class Order : AggregateRoot<OrderId>
         UpdatedAt = now;
         _history.Add(new OrderStatusChange(previous, next, now, reason));
         Raise(new OrderStatusChanged(Id, Number, Customer.Phone, previous, next, reason, now));
+        if (next == OrderStatus.AwaitingPayment)
+        {
+            PaymentAttempts++;
+            Raise(new OrderPaymentRequested(Id, Number, PaymentAttempts, PaymentMethod, Customer.Phone, Totals.Total, now));
+        }
+
         return Result.Success();
     }
 

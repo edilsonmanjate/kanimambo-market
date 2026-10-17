@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Payments.Domain\Kanimambo.Payments.Domain.csproj" />
+    <ProjectReference Include="..\Kanimambo.Payments.Contracts\Kanimambo.Payments.Contracts.csproj" />
+    <!-- Subscribes to Ordering's payment requests through its public contracts only. -->
+    <ProjectReference Include="..\..\Ordering\Kanimambo.Ordering.Contracts\Kanimambo.Ordering.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kanimambo.Payments.UnitTests" />
+  </ItemGroup>
+
+</Project>

@@ -89,6 +89,9 @@ namespace Kanimambo.Ordering.Infrastructure.Migrations
                     b.Property<long>("Number")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("PaymentAttempts")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasMaxLength(32)
