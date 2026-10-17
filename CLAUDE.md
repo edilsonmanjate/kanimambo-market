@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 1 (Catalog) complete; awaiting approval for Phase 2 (Cart & Promotions).
+**Current phase:** Phase 2 (Cart & Promotions) complete; awaiting approval for Phase 3 (Ordering & Checkout).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -233,3 +233,10 @@ Decisions taken (see `docs/adr/`):
 - Error type `Unavailable` → 503 for upstream outages and exhausted quotas.
 - Flyweight pool is process-wide static (`VariantAttributesPool.Shared`) because EF value converters cannot take DI services.
 - Integration tests share one database per test assembly: tests that mutate data create their own seller (`CatalogApiFactory.CreateSellerAsync`); assertions on seed data filter by `CatalogSeeder.SellerIds`.
+- Cross-module calls go through `Kanimambo.<Module>.Contracts` (interfaces + DTOs, SharedKernel only; ADR 0006). Catalog exposes `ICatalogReader` / `ICurrencyConverter`; Promotions exposes `IPromotionEvaluator` + `NoPromotion`.
+- `IExchangeRate` + `NoExchangeRate` live in SharedKernel; `IExchangeRateProvider` returns `Result<IExchangeRate>` (use `Result.Success<IExchangeRate>(...)` — implicit conversions do not apply to interface types).
+- Cart: class is `ShoppingCart` (avoids a namespace/type clash), ids are random v4 (a guest cart id is the access key); every change saves a `CartMemento` (jsonb) in the same UoW; history is a linear stack, last 20 kept; `xmin` concurrency → 409 `concurrency.conflict`.
+- Promotions: rules stored as typed by marketing, type-checked against `RuleVariables` on save; API takes `discountKind` as text (`Percentage`/`FixedAmount`) so `*.Api` never references Domain types. JSON enums are serialized as strings API-wide.
+- Role names live in `SharedKernel.Identity.KnownRoles` (`backoffice`, `b2b`); `ICurrentActor.IsInRole`.
+- Npgsql only accepts UTC `DateTimeOffset` for `timestamptz`: never persist Maputo-offset values (use `MozambiqueTime` only for date logic).
+- Shared test factory routes every HttpClient to in-process simulators by host (`SimulatorRouter`); seeds Catalog + Promotions.

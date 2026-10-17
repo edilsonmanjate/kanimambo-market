@@ -13,7 +13,7 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**9 of 26 patterns implemented.**
+**12 of 26 patterns implemented.**
 
 - **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
   **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
@@ -25,6 +25,10 @@ and customers on unstable mobile networks.
   - CSV, Excel, XML and API imports (**Template Method**);
   - an audited, undoable back-office (**Command**);
   - cached, rate-limited exchange rates (**Proxy**).
+- **Phase 2 – Cart & Promotions:**
+  - carts with a snapshot history that survives lost connectivity (**Memento**);
+  - pricing without null checks for guests, MZN prices and "no promotion" (**Null Object**);
+  - a rule language marketing writes and the system evaluates at runtime (**Interpreter**).
 
 ## Design patterns index
 
@@ -36,10 +40,10 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 |---|---|---|---|---|---|
 | Chain of Responsibility | Order acceptance checks (NUIT, stock, delivery zone, anti-fraud, seller minimum) | Ordering | 3 | ⏳ | — |
 | Command | Auditable, undoable back-office operations (bulk price change, suspend seller) | Catalog | 1 | ✅ | [Command](docs/patterns/Command.md) |
-| Interpreter | Marketing-authored promotion rules evaluated at runtime | Promotions | 2 | ⏳ | — |
+| Interpreter | Marketing-authored promotion rules (tokenizer, parser, typed AST) evaluated at runtime | Promotions | 2 | ✅ | [Interpreter](docs/patterns/Interpreter.md) |
 | Iterator | Streaming a slow, paginated wholesaler catalog as `IAsyncEnumerable` | Catalog | 1 | ✅ | [Iterator](docs/patterns/Iterator.md) |
 | Mediator | In-process dispatch of commands/queries/notifications with ordered pipeline behaviors | SharedKernel | 0 | ✅ | [Mediator](docs/patterns/Mediator.md) |
-| Memento | Cart snapshots for customers who lose connectivity; undo on B2B drafts | Cart | 2 | ⏳ | — |
+| Memento | Cart snapshots for customers who lose connectivity: restore snapshot N, undo | Cart | 2 | ✅ | [Memento](docs/patterns/Memento.md) |
 | Observer | `OrderPaid` → invoice, SMS, seller notification, stock reservation (with outbox) | Transversal | 3 | ⏳ | — |
 | State | Order lifecycle and mobile-money payment lifecycle | Ordering, Payments | 3–4 | ⏳ | — |
 | Strategy | Shipping cost: same-day by zone, inter-provincial by weight, pickup point | Shipping | 5 | ⏳ | — |
@@ -53,7 +57,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Abstract Factory | Coherent component families per tax regime (IVA normal vs ISPC) | Invoicing | 6 | ⏳ | — |
 | Builder | Always-valid `Invoice` (NUITs, series, sequence, exemptions, MZN totals) | Invoicing | 6 | ⏳ | — |
 | Factory Method | Payment processor by phone prefix (84/85 M-Pesa, 86/87 e-Mola, 82/83 mKesh) | Payments | 4 | ⏳ | — |
-| Null Object | `GuestCustomer`, `NoPromotion`, `NoExchangeRate` remove null checks from checkout | Cart, Promotions | 2 | ⏳ | — |
+| Null Object | `GuestCustomer`, `NoPromotion`, `NoExchangeRate` remove null checks from cart pricing | Cart, Promotions | 2 | ✅ | [Null Object](docs/patterns/NullObject.md) |
 | Object Pool | Reusing buffers for bulk PDF / QR / monthly AT file generation | Invoicing | 6 | ⏳ | — |
 | Prototype | Weekly B2B reorders cloned from the previous order | Ordering | 3 | ⏳ | — |
 | Singleton | Cached IVA/ISPC rate table and feature flags via DI lifetime | Transversal | 6 | ⏳ | — |
@@ -99,13 +103,16 @@ src/
   Kanimambo.SharedKernel/               Entity, AggregateRoot, DomainEvent, Result<T>, Money, Specification, Mediator
   Kanimambo.SharedKernel.Web/           ApiControllerBase (Result → ProblemDetails), shared HTTP attributes
   Kanimambo.SharedKernel.Infrastructure/ EF unit of work, inbox, per-module DbContext registration
-  Modules/Catalog/                      {Api, Application, Domain, Infrastructure}
+  Modules/Catalog/                      {Api, Application, Contracts, Domain, Infrastructure}
+  Modules/Promotions/                   {Api, Application, Contracts, Domain, Infrastructure}
+  Modules/Cart/                         {Api, Application, Domain, Infrastructure}
   Simulators/                           ExchangeRates, Wholesaler (later: MobileMoney, Courier)
 tests/
   Kanimambo.SharedKernel.UnitTests/
-  Kanimambo.Catalog.UnitTests/
+  Kanimambo.Catalog.UnitTests/  Kanimambo.Promotions.UnitTests/  Kanimambo.Cart.UnitTests/
   Kanimambo.Api.IntegrationTests/       WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
   Kanimambo.Catalog.IntegrationTests/   real API + in-process simulators
+  Kanimambo.Promotions.IntegrationTests/  Kanimambo.Cart.IntegrationTests/
   Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
   Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight; Object Pool in Phase 6)
   Kanimambo.Testing/                    shared test host and JWT helpers
@@ -172,6 +179,23 @@ curl "$API/api/catalog/backoffice/operations" -H "Authorization: Bearer $TOKEN" 
 curl -X POST "$API/api/catalog/backoffice/operations/<id>/undo" -H "Authorization: Bearer $TOKEN"
 ```
 
+### A short tour of the Cart and Promotions
+
+```bash
+# Memento: a guest cart (keep the id on the device); every change is a snapshot
+CART=$(curl -s -X POST "$API/api/carts" -H "Content-Type: application/json" -d '{"deliveryCity":"Maputo"}' | jq -r .id)
+curl -X PUT "$API/api/carts/$CART/lines/<productId>" -H "Content-Type: application/json" -d '{"quantity":2}'
+curl "$API/api/carts/$CART/snapshots"
+curl -X POST "$API/api/carts/$CART/snapshots/1/restore"      # or: POST .../undo
+
+# Null Object + Interpreter: price in MZN with the best promotion (try paymentMethod=MPesa)
+curl "$API/api/carts/$CART/pricing?paymentMethod=MPesa"
+
+# Interpreter: check a rule while writing it (back-office token)
+curl -X POST "$API/api/promotions/rules/validate" -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" -d '{"rule":"cart.total >= 2500 AN customer.city = \"Maputo\""}'
+```
+
 Benchmarks:
 
 ```bash
@@ -192,7 +216,7 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 |---|---|
 | 0 ✅ | Foundations: solution, Aspire, SharedKernel, Mediator, Specification base, API host, CI, architecture tests |
 | 1 ✅ | Catalog: Composite, Flyweight, Specification, Iterator, Template Method, Command, Proxy |
-| 2 | Cart & Promotions: Memento, Null Object, Interpreter |
+| 2 ✅ | Cart & Promotions: Memento, Null Object, Interpreter |
 | 3 | Ordering & Checkout: State, Chain of Responsibility, Prototype, Facade, Observer + outbox |
 | 4 | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |
 | 5 | Shipping: Strategy, courier Adapter, simulator |

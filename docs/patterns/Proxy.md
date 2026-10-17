@@ -33,7 +33,7 @@ The proxy controls access to the expensive subject in three ways:
    answers `Unavailable` (503) instead of hammering the API.
 
 Failures are **not cached**, so the next request retries. Converting a currency to itself never calls
-upstream.
+upstream: the proxy answers with the [`NoExchangeRate`](NullObject.md) null object.
 
 ```mermaid
 sequenceDiagram
