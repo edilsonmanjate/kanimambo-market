@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Cart.Domain\Kanimambo.Cart.Domain.csproj" />
+    <!-- Other modules are reached only through their public contracts. -->
+    <ProjectReference Include="..\..\Catalog\Kanimambo.Catalog.Contracts\Kanimambo.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\Promotions\Kanimambo.Promotions.Contracts\Kanimambo.Promotions.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kanimambo.Cart.UnitTests" />
+  </ItemGroup>
+
+</Project>
