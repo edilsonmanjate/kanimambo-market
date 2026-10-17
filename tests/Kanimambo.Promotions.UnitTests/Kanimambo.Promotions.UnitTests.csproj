@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Promotions\Kanimambo.Promotions.Application\Kanimambo.Promotions.Application.csproj" />
+  </ItemGroup>
+
+</Project>

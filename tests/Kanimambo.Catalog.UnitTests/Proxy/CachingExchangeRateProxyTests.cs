@@ -63,7 +63,7 @@ public sealed class CachingExchangeRateProxyTests : IDisposable
     [Fact]
     public async Task Converting_a_currency_to_itself_never_calls_upstream()
     {
-        (await CreateProxy().GetRateAsync(Currency.Mzn, Currency.Mzn, Today, Ct)).Value.Rate.ShouldBe(1m);
+        (await CreateProxy().GetRateAsync(Currency.Mzn, Currency.Mzn, Today, Ct)).Value.ShouldBeSameAs(NoExchangeRate.For(Currency.Mzn));
 
         _api.Calls.ShouldBe(0);
     }
@@ -127,7 +127,7 @@ public sealed class CachingExchangeRateProxyTests : IDisposable
 
         public bool FailNext { get; set; }
 
-        public async Task<Result<ExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken)
+        public async Task<Result<IExchangeRate>> GetRateAsync(Currency from, Currency to, DateOnly date, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref _calls);
             await Task.Delay(Latency, CancellationToken.None);
@@ -138,7 +138,7 @@ public sealed class CachingExchangeRateProxyTests : IDisposable
                 return Error.Unavailable("exchange_rate.upstream_timeout", "timeout");
             }
 
-            return new ExchangeRate(from, to, date, from == Currency.Usd ? 63.90m : 3.55m);
+            return Result.Success<IExchangeRate>(new ExchangeRate(from, to, date, from == Currency.Usd ? 63.90m : 3.55m));
         }
     }
 }

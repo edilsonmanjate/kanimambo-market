@@ -2,8 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanimambo.Testing\Kanimambo.Testing.csproj" />
-    <ProjectReference Include="..\..\src\Simulators\Kanimambo.Simulators.ExchangeRates\Kanimambo.Simulators.ExchangeRates.csproj" />
-    <ProjectReference Include="..\..\src\Simulators\Kanimambo.Simulators.Wholesaler\Kanimambo.Simulators.Wholesaler.csproj" />
   </ItemGroup>
 
 </Project>

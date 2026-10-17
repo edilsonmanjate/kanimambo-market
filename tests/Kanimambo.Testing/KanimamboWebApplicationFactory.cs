@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using Kanimambo.Simulators.ExchangeRates;
+using Kanimambo.Simulators.Wholesaler;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -16,22 +18,29 @@ namespace Kanimambo.Testing;
 
 /// <summary>
 /// Boots the real API host against throwaway PostgreSQL and Redis containers (migrations and demo seed
-/// data applied). Derive once per test assembly and register it as an assembly fixture.
+/// data applied), with the external-system simulators running in-process at zero latency behind the
+/// API's real HTTP clients. Derive once per test assembly and register it as an assembly fixture.
 /// </summary>
 public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private const string ExchangeRatesHost = "exchange-rates.test";
+    private const string WholesalerHost = "wholesaler.test";
+
     private static readonly SymmetricSecurityKey SigningKey =
         new(Encoding.UTF8.GetBytes("kanimambo-integration-tests-signing-key-not-a-secret"));
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
     private readonly RedisContainer _redis = new RedisBuilder("redis:7-alpine").Build();
 
+    public WebApplicationFactory<RatesController> ExchangeRates { get; } = Simulator<RatesController>("Simulator:LatencyMilliseconds");
+
+    public WebApplicationFactory<ProductsController> Wholesaler { get; } = Simulator<ProductsController>("Simulator:LatencyMillisecondsPerPage");
+
     public string DatabaseConnectionString => _postgres.GetConnectionString();
 
     public async ValueTask InitializeAsync()
     {
         await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync());
-        await OnContainersStartedAsync();
 
         // Start the host eagerly: lazy creation is not thread-safe, and test classes running in
         // parallel would otherwise race to build separate hosts with separate singletons.
@@ -59,8 +68,6 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         });
     }
 
-    protected virtual Task OnContainersStartedAsync() => Task.CompletedTask;
-
     protected virtual void ConfigureTestServices(IServiceCollection services)
     {
     }
@@ -71,6 +78,9 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         builder.UseSetting("ConnectionStrings:redis", _redis.GetConnectionString());
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Catalog:SeedDemoData", "true");
+        builder.UseSetting("Promotions:SeedDemoData", "true");
+        builder.UseSetting("Catalog:ExchangeRates:BaseAddress", $"http://{ExchangeRatesHost}/");
+        builder.UseSetting("Catalog:Wholesaler:BaseAddress", $"http://{WholesalerHost}/");
 
         builder.ConfigureTestServices(services =>
         {
@@ -83,6 +93,13 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
                     IssuerSigningKey = SigningKey,
                 });
 
+            services.ConfigureHttpClientDefaults(http => http.ConfigurePrimaryHttpMessageHandler(() => new SimulatorRouter(
+                new Dictionary<string, HttpMessageInvoker>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [ExchangeRatesHost] = new(ExchangeRates.Server.CreateHandler()),
+                    [WholesalerHost] = new(Wholesaler.Server.CreateHandler()),
+                })));
+
             ConfigureTestServices(services);
         });
     }
@@ -90,8 +107,14 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
+        await ExchangeRates.DisposeAsync();
+        await Wholesaler.DisposeAsync();
         await _postgres.DisposeAsync();
         await _redis.DisposeAsync();
         GC.SuppressFinalize(this);
     }
+
+    private static WebApplicationFactory<T> Simulator<T>(string latencySetting)
+        where T : class =>
+        new WebApplicationFactory<T>().WithWebHostBuilder(builder => builder.UseSetting(latencySetting, "0"));
 }

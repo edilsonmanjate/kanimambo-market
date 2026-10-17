@@ -57,6 +57,29 @@ public sealed class ModuleRulesTests
     }
 
     [Fact]
+    public void Contracts_are_pure_and_depend_only_on_the_shared_kernel()
+    {
+        foreach (var contracts in Layer("Contracts"))
+        {
+            Types.InAssembly(contracts.Assembly)
+                .ShouldNot().HaveDependencyOnAny([.. InfrastructureFrameworks, "Microsoft.AspNetCore", .. AllModuleNamespaces(KanimamboAssemblies.InternalLayers)])
+                .GetResult()
+                .ShouldPass($"{contracts.Module}.Contracts is a public surface: no module internals, no frameworks");
+        }
+    }
+
+    [Fact]
+    public void Modules_that_collaborate_do_so_through_contracts()
+    {
+        var cartApplication = Layer("Application").Single(m => m.Module == "Cart").Assembly;
+        var referenced = cartApplication.GetReferencedAssemblies().Select(a => a.Name).ToArray();
+
+        referenced.ShouldContain("Kanimambo.Catalog.Contracts");
+        referenced.ShouldContain("Kanimambo.Promotions.Contracts");
+        referenced.ShouldNotContain(n => n!.StartsWith("Kanimambo.Catalog.", StringComparison.Ordinal) && !n.EndsWith(".Contracts", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Every_module_assembly_follows_the_naming_convention_so_rules_cover_it()
     {
         var unexpected = KanimamboAssemblies.All

@@ -1,17 +1,11 @@
-using Kanimambo.Catalog.Application.Abstractions;
 using Kanimambo.Catalog.Domain;
 using Kanimambo.Catalog.Domain.Products;
 using Kanimambo.Catalog.Domain.Sellers;
 using Kanimambo.Catalog.Domain.Variants;
-using Kanimambo.Catalog.Infrastructure.ExchangeRates;
 using Kanimambo.Catalog.Infrastructure.Persistence;
 using Kanimambo.Catalog.IntegrationTests;
-using Kanimambo.Simulators.ExchangeRates;
-using Kanimambo.Simulators.Wholesaler;
 using Kanimambo.SharedKernel.Domain;
 using Kanimambo.Testing;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 [assembly: AssemblyFixture(typeof(CatalogApiFactory))]
@@ -19,26 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Kanimambo.Catalog.IntegrationTests;
 
 /// <summary>
-/// The real API on PostgreSQL + Redis, with the exchange-rate and wholesaler simulators running in-process
-/// (zero latency) behind the same HTTP clients the API uses in production.
+/// The real API on PostgreSQL + Redis with in-process simulators (see <see cref="KanimamboWebApplicationFactory"/>).
 /// </summary>
 public sealed class CatalogApiFactory : KanimamboWebApplicationFactory
 {
-    public WebApplicationFactory<RatesController> ExchangeRates { get; } = Simulator<RatesController>("Simulator:LatencyMilliseconds");
-
-    public WebApplicationFactory<ProductsController> Wholesaler { get; } = Simulator<ProductsController>("Simulator:LatencyMillisecondsPerPage");
-
-    protected override void ConfigureTestServices(IServiceCollection services)
-    {
-        services.AddHttpClient(HttpExchangeRateClient.HttpClientName)
-            .ConfigurePrimaryHttpMessageHandler(() => ExchangeRates.Server.CreateHandler())
-            .ConfigureHttpClient(http => http.BaseAddress = ExchangeRates.Server.BaseAddress);
-
-        services.AddHttpClient<IWholesalerCatalog, Infrastructure.Wholesaler.WholesalerCatalogClient>()
-            .ConfigurePrimaryHttpMessageHandler(() => Wholesaler.Server.CreateHandler())
-            .ConfigureHttpClient(http => http.BaseAddress = Wholesaler.Server.BaseAddress);
-    }
-
     /// <summary>Creates an isolated seller (and optional products) so tests that mutate data never collide.</summary>
     public async Task<(SellerId Seller, IReadOnlyList<SimpleProduct> Products)> CreateSellerAsync(params (string Sku, decimal Price)[] products)
     {
@@ -57,14 +35,4 @@ public sealed class CatalogApiFactory : KanimamboWebApplicationFactory
         return (seller.Id, created);
     }
 
-    public override async ValueTask DisposeAsync()
-    {
-        await ExchangeRates.DisposeAsync();
-        await Wholesaler.DisposeAsync();
-        await base.DisposeAsync();
-    }
-
-    private static WebApplicationFactory<T> Simulator<T>(string latencySetting)
-        where T : class =>
-        new WebApplicationFactory<T>().WithWebHostBuilder(builder => builder.UseSetting(latencySetting, "0"));
 }

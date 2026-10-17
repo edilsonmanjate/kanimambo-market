@@ -127,6 +127,8 @@ public sealed class BackofficeOperationTests
         public string Name { get; set; } = name;
 
         public bool IsAuthenticated => true;
+
+        public bool IsInRole(string role) => false;
     }
 
     private sealed class InMemoryAuditLog : IBackofficeOperationLog

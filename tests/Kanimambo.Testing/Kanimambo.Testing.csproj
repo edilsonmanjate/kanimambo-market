@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Shared integration-test infrastructure: the real API host on throwaway containers, and test JWTs. -->
+  <!-- Shared integration-test infrastructure: the real API host on throwaway containers, simulators, test JWTs. -->
 
   <ItemGroup>
     <PackageReference Include="xunit.v3.extensibility.core" />
@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kanimambo.Api\Kanimambo.Api.csproj" />
+    <ProjectReference Include="..\..\src\Simulators\Kanimambo.Simulators.ExchangeRates\Kanimambo.Simulators.ExchangeRates.csproj" />
+    <ProjectReference Include="..\..\src\Simulators\Kanimambo.Simulators.Wholesaler\Kanimambo.Simulators.Wholesaler.csproj" />
   </ItemGroup>
 
 </Project>
