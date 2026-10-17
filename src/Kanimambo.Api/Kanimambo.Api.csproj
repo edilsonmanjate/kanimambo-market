@@ -9,6 +9,7 @@
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
   </ItemGroup>
 
@@ -16,6 +17,9 @@
     <ProjectReference Include="..\Kanimambo.ServiceDefaults\Kanimambo.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Kanimambo.SharedKernel\Kanimambo.SharedKernel.csproj" />
     <ProjectReference Include="..\Kanimambo.SharedKernel.Web\Kanimambo.SharedKernel.Web.csproj" />
+    <ProjectReference Include="..\Kanimambo.SharedKernel.Infrastructure\Kanimambo.SharedKernel.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Catalog\Kanimambo.Catalog.Api\Kanimambo.Catalog.Api.csproj" />
+    <ProjectReference Include="..\Modules\Catalog\Kanimambo.Catalog.Infrastructure\Kanimambo.Catalog.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

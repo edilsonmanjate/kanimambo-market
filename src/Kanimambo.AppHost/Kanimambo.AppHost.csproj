@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanimambo.Api\Kanimambo.Api.csproj" />
+    <ProjectReference Include="..\Simulators\Kanimambo.Simulators.ExchangeRates\Kanimambo.Simulators.ExchangeRates.csproj" />
+    <ProjectReference Include="..\Simulators\Kanimambo.Simulators.Wholesaler\Kanimambo.Simulators.Wholesaler.csproj" />
   </ItemGroup>
 
 </Project>
