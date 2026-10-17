@@ -49,7 +49,7 @@ Each operator has an **adapter** in Infrastructure: `MPesaAdapter`, `EMolaAdapte
 - turns 5xx responses, timeouts and connection failures into `GatewayUnavailable` / `Timeout`, both
   marked `IsTransient`, so the retry decorator knows what is safe to repeat.
 
-The shared HTTP and signature plumbing is in `GatewayHttp` and `CallbackSignature`. The translation
+The shared HTTP and signature plumbing is in `GatewayHttp` and `WebhookSignature` (shared with the courier adapters). The translation
 of each format stays inside its own adapter.
 
 ```mermaid
@@ -78,6 +78,38 @@ The callback endpoint (`POST /api/payments/callbacks/{operator}`) is anonymous a
 the raw body and signature to the operator's adapter, so a forged or tampered callback is rejected
 with `401 payments.invalid_signature` before anything else happens.
 
+### Couriers (Shipping)
+
+The same problem appears with couriers. `ICourierGateway` (`BookAsync`, `ParseWebhook`) is the target,
+with one adapter per courier.
+
+> Both couriers are **fictional**, and their APIs are the ones implemented by the local simulator
+> (`Kanimambo.Simulators.Courier`). A real courier integration needs that courier's documentation and
+> sandbox credentials.
+
+| | Txova Express (same-day riders, simulated) | Mbila Cargo (inter-provincial, simulated) |
+|---|---|---|
+| Booking | `POST txova/v1/deliveries`, English JSON with nested `pickup` / `dropoff` | `POST mbila/api/guias`, Portuguese fields (`origem`, `destino`, `morada`) |
+| Weight / cash | `weightKg: 12.25`, `cashToCollect: 1234.5` | `pesoGramas: 12250`, `valorCobranca: "1234,50"` |
+| Vehicle | `MOTO` / `TXOPELA` (from our `Motorbike` / `Txopela`) | — |
+| Refusal | HTTP 422 `{error: OUT_OF_AREA \| TOO_HEAVY}` | HTTP 200 `{codigo: E12 \| E30 \| E41}` |
+| Tracking webhook | `event`: `PICKED_UP`, `DELIVERED`, `FAILED` + `reason` | `estado`: `RECOLHIDO`, `EM_TRANSITO`, `ENTREGUE`, `DEVOLVIDO` + `observacao` |
+
+**What the courier adapters do:**
+
+- They map refusals to `CourierFailureReason` (`DestinationNotServed`, `Overweight`,
+  `InvalidRecipient`, `Rejected`), keeping the native code.
+- They turn 5xx responses, timeouts and connection failures into a transient `Unavailable`. The
+  booking is then retried through the outbox.
+- They translate each courier's status words into our `ParcelStatus`.
+
+**Why bookings can be retried safely:** our parcel reference (`KM-1002-1`) is deterministic, and the
+courier returns the existing waybill for a reference it already knows. For the same reason, couriers
+keep ServiceDefaults' standard HTTP resilience, unlike the payment operators.
+
+**Shared plumbing:** webhook signatures use the same `WebhookSignature` helper as the payment
+callbacks (`Kanimambo.SharedKernel.Infrastructure.Webhooks`).
+
 ## Where in the code
 
 - Target: [MobileMoneyGateway.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Gateways/MobileMoneyGateway.cs)
@@ -85,7 +117,12 @@ with `401 payments.invalid_signature` before anything else happens.
   [GatewayHttp.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Adapters/GatewayHttp.cs)
 - Simulator: [OperatorControllers.cs](../../src/Simulators/Kanimambo.Simulators.MobileMoney/OperatorControllers.cs)
 - Callback endpoint: [PaymentsController.cs](../../src/Modules/Payments/Kanimambo.Payments.Api/Controllers/PaymentsController.cs)
-- Phase 5 adds courier adapters the same way.
+- Couriers:
+  - target: [CourierGateway.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Application/Couriers/CourierGateway.cs)
+  - adapters: [CourierAdapters.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Infrastructure/Couriers/CourierAdapters.cs)
+  - simulator: [CourierControllers.cs](../../src/Simulators/Kanimambo.Simulators.Courier/CourierControllers.cs)
+  - webhook endpoint: `POST /api/shipping/webhooks/{courier}` in
+    [ShippingController.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Api/Controllers/ShippingController.cs)
 
 ## Tests
 
@@ -100,6 +137,18 @@ with `401 payments.invalid_signature` before anything else happens.
 - [MobileMoneyPaymentTests](../../tests/Kanimambo.Payments.IntegrationTests/MobileMoneyPaymentTests.cs):
   the three operators end to end through the simulator, including native codes on failed payments
   and forged callbacks returning 401.
+- [CourierAdapterTests](../../tests/Kanimambo.Shipping.UnitTests/Adapter/CourierAdapterTests.cs):
+  - Txova gets kilograms and its vehicle codes;
+  - Mbila gets grams and a decimal-comma amount;
+  - six native refusals map to the shared reasons;
+  - outages are transient;
+  - seven webhook states are translated;
+  - bad signatures and unknown states are rejected, never guessed.
+- [ShippingTests](../../tests/Kanimambo.Shipping.IntegrationTests/ShippingTests.cs):
+  - both couriers end to end through the simulator;
+  - a refused booking keeps Mbila's reason;
+  - a booking outage is retried under the same reference;
+  - forged webhooks return 401.
 
 ## Trade-offs & when NOT to use
 
