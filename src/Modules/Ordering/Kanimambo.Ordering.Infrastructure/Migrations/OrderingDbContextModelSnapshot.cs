@@ -374,6 +374,72 @@ namespace Kanimambo.Ordering.Infrastructure.Migrations
                                 .HasForeignKey("OrderId");
                         });
 
+                    b.OwnsOne("Kanimambo.Ordering.Domain.OrderDelivery", "Delivery", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("District")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DeliveryDistrict");
+
+                            b1.Property<DateOnly>("EstimatedDelivery")
+                                .HasColumnType("date")
+                                .HasColumnName("EstimatedDelivery");
+
+                            b1.Property<string>("Method")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)")
+                                .HasColumnName("DeliveryMethod");
+
+                            b1.Property<string>("PickupPointId")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("PickupPointId");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders", "ordering");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.OwnsMany("Kanimambo.Ordering.Domain.OrderParcel", "Parcels", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("OriginCity")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<Guid>("SellerId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("WeightKg")
+                                .HasPrecision(18, 3)
+                                .HasColumnType("numeric(18,3)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("OrderId");
+
+                            b1.ToTable("OrderParcels", "ordering");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
                     b.OwnsMany("Kanimambo.Ordering.Domain.OrderStatusChange", "History", b1 =>
                         {
                             b1.Property<int>("Id")
@@ -415,9 +481,14 @@ namespace Kanimambo.Ordering.Infrastructure.Migrations
                     b.Navigation("Customer")
                         .IsRequired();
 
+                    b.Navigation("Delivery")
+                        .IsRequired();
+
                     b.Navigation("History");
 
                     b.Navigation("Lines");
+
+                    b.Navigation("Parcels");
                 });
 #pragma warning restore 612, 618
         }

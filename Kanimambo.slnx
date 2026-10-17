@@ -43,7 +43,15 @@
     <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Domain/Kanimambo.Promotions.Domain.csproj" />
     <Project Path="src/Modules/Promotions/Kanimambo.Promotions.Infrastructure/Kanimambo.Promotions.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Shipping/">
+    <Project Path="src/Modules/Shipping/Kanimambo.Shipping.Api/Kanimambo.Shipping.Api.csproj" />
+    <Project Path="src/Modules/Shipping/Kanimambo.Shipping.Application/Kanimambo.Shipping.Application.csproj" />
+    <Project Path="src/Modules/Shipping/Kanimambo.Shipping.Contracts/Kanimambo.Shipping.Contracts.csproj" />
+    <Project Path="src/Modules/Shipping/Kanimambo.Shipping.Domain/Kanimambo.Shipping.Domain.csproj" />
+    <Project Path="src/Modules/Shipping/Kanimambo.Shipping.Infrastructure/Kanimambo.Shipping.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Simulators/">
+    <Project Path="src/Simulators/Kanimambo.Simulators.Courier/Kanimambo.Simulators.Courier.csproj" />
     <Project Path="src/Simulators/Kanimambo.Simulators.ExchangeRates/Kanimambo.Simulators.ExchangeRates.csproj" />
     <Project Path="src/Simulators/Kanimambo.Simulators.MobileMoney/Kanimambo.Simulators.MobileMoney.csproj" />
     <Project Path="src/Simulators/Kanimambo.Simulators.Wholesaler/Kanimambo.Simulators.Wholesaler.csproj" />
@@ -63,6 +71,8 @@
     <Project Path="tests/Kanimambo.Promotions.IntegrationTests/Kanimambo.Promotions.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.Promotions.UnitTests/Kanimambo.Promotions.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.SharedKernel.UnitTests/Kanimambo.SharedKernel.UnitTests.csproj" />
+    <Project Path="tests/Kanimambo.Shipping.IntegrationTests/Kanimambo.Shipping.IntegrationTests.csproj" />
+    <Project Path="tests/Kanimambo.Shipping.UnitTests/Kanimambo.Shipping.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Testing/Kanimambo.Testing.csproj" />
   </Folder>
 </Solution>

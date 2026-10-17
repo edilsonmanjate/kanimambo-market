@@ -17,6 +17,10 @@ internal sealed class OrderingIntegrationEventMapper : IIntegrationEventMapper
                 [.. e.Lines.Select(l => new OrderLineContract(l.ProductId, l.SellerId, l.Sku, l.Name, l.Quantity, l.LineTotal.Amount))])],
         OrderPaymentRequested e =>
             [new OrderPaymentRequestedIntegrationEvent(e.EventId, e.OccurredAt, e.OrderId.Value, e.Number, e.Attempt, e.PaymentMethod.ToString(), e.CustomerPhone, e.Amount.Amount)],
+        OrderDispatched e =>
+            [new OrderDispatchedIntegrationEvent(e.EventId, e.OccurredAt, e.OrderId.Value, e.Number, e.Delivery.Method, e.DeliveryCity, e.Delivery.District,
+                e.Delivery.PickupPointId, e.CustomerPhone, e.CashToCollect.Amount,
+                [.. e.Parcels.Select(p => new DispatchedParcelContract(p.SellerId, p.OriginCity, p.WeightKg))])],
         OrderStatusChanged e =>
             [new OrderStatusChangedIntegrationEvent(e.EventId, e.OccurredAt, e.OrderId.Value, e.Number, e.CustomerPhone, e.From.ToString(), e.To.ToString(), e.Reason)],
         _ => [],

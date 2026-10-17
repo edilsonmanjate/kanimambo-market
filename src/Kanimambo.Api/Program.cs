@@ -20,6 +20,9 @@ using Kanimambo.Promotions.Application;
 using Kanimambo.Promotions.Infrastructure;
 using Kanimambo.SharedKernel.Messaging;
 using Kanimambo.SharedKernel.Messaging.Behaviors;
+using Kanimambo.Shipping.Api.Controllers;
+using Kanimambo.Shipping.Application;
+using Kanimambo.Shipping.Infrastructure;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,12 +42,14 @@ builder.AddPromotionsModule();
 builder.AddCartModule();
 builder.AddOrderingModule();
 builder.AddPaymentsModule();
+builder.AddShippingModule();
 builder.Services.AddKanimamboControllers()
     .AddApplicationPart(typeof(CatalogController).Assembly)
     .AddApplicationPart(typeof(PromotionsController).Assembly)
     .AddApplicationPart(typeof(CartsController).Assembly)
     .AddApplicationPart(typeof(CheckoutController).Assembly)
-    .AddApplicationPart(typeof(PaymentsController).Assembly);
+    .AddApplicationPart(typeof(PaymentsController).Assembly)
+    .AddApplicationPart(typeof(ShippingController).Assembly);
 
 // Behaviors run in registration order (first = outermost).
 builder.Services.AddMediator(mediator => mediator
@@ -53,6 +58,7 @@ builder.Services.AddMediator(mediator => mediator
     .AddModule(CartModule.Name, typeof(CartModule).Assembly)
     .AddModule(OrderingModule.Name, typeof(OrderingModule).Assembly)
     .AddModule(PaymentsModule.Name, typeof(PaymentsModule).Assembly)
+    .AddModule(ShippingModule.Name, typeof(ShippingModule).Assembly)
     .AddBehavior(typeof(LoggingBehavior<,>))
     .AddBehavior(typeof(ValidationBehavior<,>))
     .AddBehavior(typeof(UnitOfWorkBehavior<,>))

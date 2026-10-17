@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\Catalog\Kanimambo.Catalog.Contracts\Kanimambo.Catalog.Contracts.csproj" />
     <ProjectReference Include="..\..\Promotions\Kanimambo.Promotions.Contracts\Kanimambo.Promotions.Contracts.csproj" />
     <ProjectReference Include="..\..\Payments\Kanimambo.Payments.Contracts\Kanimambo.Payments.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shipping\Kanimambo.Shipping.Contracts\Kanimambo.Shipping.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

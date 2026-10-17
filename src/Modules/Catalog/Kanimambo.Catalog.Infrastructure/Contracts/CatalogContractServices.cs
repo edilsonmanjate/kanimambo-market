@@ -30,7 +30,7 @@ internal sealed class CatalogReader(CatalogDbContext db) : ICatalogReader
     {
         var ids = sellerIds.Distinct().Select(id => new SellerId(id)).ToArray();
         var sellers = await db.Sellers.AsNoTracking().Where(s => ids.Contains(s.Id)).ToListAsync(cancellationToken);
-        return sellers.Select(s => new SellerSnapshot(s.Id.Value, s.Name, s.IsActive, [.. s.DeliveryCities], s.MinimumOrder)).ToList();
+        return sellers.Select(s => new SellerSnapshot(s.Id.Value, s.Name, s.IsActive, [.. s.DeliveryCities], s.MinimumOrder, s.City)).ToList();
     }
 }
 
