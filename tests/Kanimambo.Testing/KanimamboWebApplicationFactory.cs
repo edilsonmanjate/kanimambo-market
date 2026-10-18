@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Kanimambo.Simulators.Courier;
 using Kanimambo.Simulators.ExchangeRates;
+using Kanimambo.Simulators.Messaging;
 using Kanimambo.Simulators.MobileMoney;
 using Kanimambo.Simulators.Wholesaler;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,6 +30,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
     private const string WholesalerHost = "wholesaler.test";
     private const string MobileMoneyHost = "mobile-money.test";
     private const string CourierHost = "courier.test";
+    private const string MessagingHost = "messaging.test";
     private const string ApiHost = "api.test";
 
     private static readonly SymmetricSecurityKey SigningKey =
@@ -42,6 +44,9 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
     public WebApplicationFactory<RatesController> ExchangeRates { get; } = Simulator<RatesController>("Simulator:LatencyMilliseconds");
 
     public WebApplicationFactory<ProductsController> Wholesaler { get; } = Simulator<ProductsController>("Simulator:LatencyMillisecondsPerPage");
+
+    /// <summary>SMS, WhatsApp and e-mail gateways; read what customers received with <c>GET /inbox?to=</c>.</summary>
+    public WebApplicationFactory<Inbox> Messaging { get; } = new WebApplicationFactory<Inbox>();
 
     /// <summary>Mobile-money operators; their callbacks are routed back into this API.</summary>
     public WebApplicationFactory<Ledger> MobileMoney => _mobileMoney ??= new WebApplicationFactory<Ledger>().WithWebHostBuilder(builder =>
@@ -123,6 +128,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         builder.UseSetting("Payments:TimeoutCheckInterval", "00:00:00.200");
         builder.UseSetting("Payments:GatewayRetryBaseDelay", "00:00:00.050");
         builder.UseSetting("Shipping:WebhookBaseAddress", $"http://{ApiHost}/");
+        builder.UseSetting("Notifications:Gateway:BaseAddress", $"http://{MessagingHost}/");
         foreach (var courier in new[] { "Txova", "Mbila" })
         {
             builder.UseSetting($"Shipping:Couriers:{courier}:BaseAddress", $"http://{CourierHost}/");
@@ -151,6 +157,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
                     [WholesalerHost] = new(Wholesaler.Server.CreateHandler()),
                     [MobileMoneyHost] = new(MobileMoney.Server.CreateHandler()),
                     [CourierHost] = new(Courier.Server.CreateHandler()),
+                    [MessagingHost] = new(Messaging.Server.CreateHandler()),
                 })));
 
             ConfigureTestServices(services);
@@ -162,6 +169,7 @@ public abstract class KanimamboWebApplicationFactory : WebApplicationFactory<Pro
         await base.DisposeAsync();
         await ExchangeRates.DisposeAsync();
         await Wholesaler.DisposeAsync();
+        await Messaging.DisposeAsync();
         if (_mobileMoney is not null)
         {
             await _mobileMoney.DisposeAsync();

@@ -14,6 +14,7 @@ public sealed class LifecycleAndOutboxTests(OrderingApiFactory factory)
     private const string StockSubscriber = "Kanimambo.Catalog.Application.Stock.ReserveStockWhenOrderIsPaid";
     private const string FlakySubscriber = "Kanimambo.Ordering.IntegrationTests.FlakyOrderPaidSubscriber";
     private const string InvoicingSubscriber = "Kanimambo.Invoicing.Application.InvoiceWhenOrderPaid";
+    private const string NotificationsSubscriber = "Kanimambo.Notifications.Application.NotificationSubscribers";
 
     private readonly HttpClient _guest = factory.CreateClient();
 
@@ -82,7 +83,7 @@ public sealed class LifecycleAndOutboxTests(OrderingApiFactory factory)
         var message = await EventuallyProcessedAsync(order);
 
         message.Attempts.ShouldBe(2);
-        message.DeliveredTo.ShouldBe([StockSubscriber, FlakySubscriber, InvoicingSubscriber], ignoreOrder: true);
+        message.DeliveredTo.ShouldBe([StockSubscriber, FlakySubscriber, InvoicingSubscriber, NotificationsSubscriber], ignoreOrder: true);
         factory.Failures.Calls[order].ShouldBe(3);
         (await _guest.StockAsync(products["A"])).ShouldBe(8); // reserved exactly once
     }
@@ -101,7 +102,7 @@ public sealed class LifecycleAndOutboxTests(OrderingApiFactory factory)
 
         message!.Attempts.ShouldBe(3);
         message.ProcessedAt.ShouldBeNull();
-        message.DeliveredTo.ShouldBe([StockSubscriber, InvoicingSubscriber], ignoreOrder: true);
+        message.DeliveredTo.ShouldBe([StockSubscriber, InvoicingSubscriber, NotificationsSubscriber], ignoreOrder: true);
         message.LastError!.ShouldContain("Simulated outage");
         (await _guest.StockAsync(products["A"])).ShouldBe(9);
     }

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Testing\Kanimambo.Testing.csproj" />
+  </ItemGroup>
+
+</Project>
