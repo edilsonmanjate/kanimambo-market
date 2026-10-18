@@ -78,7 +78,7 @@ classDiagram
 
 ## Tests
 
-- [SingletonTests](../../tests/Kanimambo.Invoicing.UnitTests/Singleton/SingletonTests.cs):
+- [TaxRateTableTests](../../tests/Kanimambo.Invoicing.UnitTests/Singleton/TaxRateTableTests.cs), [FeatureFlagTests](../../tests/Kanimambo.Invoicing.UnitTests/Singleton/FeatureFlagTests.cs):
   - the rate in force on each date (17% on 2022-12-31, 16% from 2023-01-01);
   - unknown categories and dates before any rate are errors;
   - invalid tables are refused, and the current one stays;

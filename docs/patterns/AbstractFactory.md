@@ -80,7 +80,7 @@ The series letters, the legal notices and the "not subject" reason come from con
 ## Where in the code
 
 - Products and the kit: [FiscalRegimeKit.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/FiscalRegimeKit.cs)
-- Factories, calculators and the registry: [FiscalRegimes.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Regimes/FiscalRegimes.cs)
+- Factories, calculators and the registry: [IvaNormalFactory.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Regimes/IvaNormalFactory.cs), [IspcFactory.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Regimes/IspcFactory.cs), [IvaTaxCalculator.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Regimes/IvaTaxCalculator.cs), [IspcTaxCalculator.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Regimes/IspcTaxCalculator.cs), [FiscalRegimeFactories.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Regimes/FiscalRegimeFactories.cs)
 - Registration: [InvoicingInfrastructureExtensions.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/InvoicingInfrastructureExtensions.cs)
 - A seller's regime: `TaxpayerProfile`, registered with `PUT /api/invoicing/taxpayers/{sellerId}`
 

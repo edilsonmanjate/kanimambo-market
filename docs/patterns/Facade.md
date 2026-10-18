@@ -65,8 +65,8 @@ district, pickup point).
 
 - [CheckoutService.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Checkout/CheckoutService.cs)
 - Single-dependency handler: `CheckoutHandlers` in
-  [OrderRequests.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/OrderRequests.cs)
-- Endpoint: [OrderingControllers.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Api/Controllers/OrderingControllers.cs)
+  [CheckoutHandlers.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/CheckoutHandlers.cs)
+- Endpoint: [CheckoutController.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Api/Controllers/CheckoutController.cs)
   (`POST /api/checkout`, `[RequiresIdempotencyKey]`)
 
 ## Tests

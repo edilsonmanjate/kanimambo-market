@@ -65,7 +65,7 @@ form we can rely on, so it is deliberately not invented.
 
 - [OrderAcceptanceChain.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/OrderAcceptanceChain.cs)
   (base, chain, builder, DI)
-- [AcceptanceChecks.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/AcceptanceChecks.cs)
+- [BusinessCustomersNeedValidNuit.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/BusinessCustomersNeedValidNuit.cs), [StockMustBeAvailable.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/StockMustBeAvailable.cs), [SellersMustDeliverToTheCity.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/SellersMustDeliverToTheCity.cs), [PhoneMustBeWithinFraudLimits.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/PhoneMustBeWithinFraudLimits.cs), [SellerMinimumsMustBeMet.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Acceptance/SellerMinimumsMustBeMet.cs)
   (the five checks)
 - Composition:
   [OrderingApplicationExtensions.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/OrderingApplicationExtensions.cs)

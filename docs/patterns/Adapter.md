@@ -112,15 +112,15 @@ callbacks (`Kanimambo.SharedKernel.Infrastructure.Webhooks`).
 
 ## Where in the code
 
-- Target: [MobileMoneyGateway.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Gateways/MobileMoneyGateway.cs)
-- Adapters: [OperatorAdapters.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Adapters/OperatorAdapters.cs),
+- Target: [IMobileMoneyGateway.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Gateways/IMobileMoneyGateway.cs), [GatewayError.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Gateways/GatewayError.cs)
+- Adapters: [MPesaAdapter.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Adapters/MPesaAdapter.cs), [EMolaAdapter.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Adapters/EMolaAdapter.cs), [MKeshAdapter.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Adapters/MKeshAdapter.cs),
   [GatewayHttp.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Adapters/GatewayHttp.cs)
-- Simulator: [OperatorControllers.cs](../../src/Simulators/Kanimambo.Simulators.MobileMoney/OperatorControllers.cs)
+- Simulator: [MPesaController.cs](../../src/Simulators/Kanimambo.Simulators.MobileMoney/MPesaController.cs), [EMolaController.cs](../../src/Simulators/Kanimambo.Simulators.MobileMoney/EMolaController.cs), [MKeshController.cs](../../src/Simulators/Kanimambo.Simulators.MobileMoney/MKeshController.cs)
 - Callback endpoint: [PaymentsController.cs](../../src/Modules/Payments/Kanimambo.Payments.Api/Controllers/PaymentsController.cs)
 - Couriers:
-  - target: [CourierGateway.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Application/Couriers/CourierGateway.cs)
-  - adapters: [CourierAdapters.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Infrastructure/Couriers/CourierAdapters.cs)
-  - simulator: [CourierControllers.cs](../../src/Simulators/Kanimambo.Simulators.Courier/CourierControllers.cs)
+  - target: [ICourierGateway.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Application/Couriers/ICourierGateway.cs), [CourierError.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Application/Couriers/CourierError.cs)
+  - adapters: [TxovaAdapter.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Infrastructure/Couriers/TxovaAdapter.cs), [MbilaAdapter.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Infrastructure/Couriers/MbilaAdapter.cs)
+  - simulator: [TxovaController.cs](../../src/Simulators/Kanimambo.Simulators.Courier/TxovaController.cs), [MbilaController.cs](../../src/Simulators/Kanimambo.Simulators.Courier/MbilaController.cs)
   - webhook endpoint: `POST /api/shipping/webhooks/{courier}` in
     [ShippingController.cs](../../src/Modules/Shipping/Kanimambo.Shipping.Api/Controllers/ShippingController.cs)
 
@@ -144,7 +144,7 @@ callbacks (`Kanimambo.SharedKernel.Infrastructure.Webhooks`).
   - outages are transient;
   - seven webhook states are translated;
   - bad signatures and unknown states are rejected, never guessed.
-- [ShippingTests](../../tests/Kanimambo.Shipping.IntegrationTests/ShippingTests.cs):
+- [DeliveryTests](../../tests/Kanimambo.Shipping.IntegrationTests/DeliveryTests.cs):
   - both couriers end to end through the simulator;
   - a refused booking keeps Mbila's reason;
   - a booking outage is retried under the same reference;

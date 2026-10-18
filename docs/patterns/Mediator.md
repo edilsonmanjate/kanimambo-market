@@ -105,8 +105,8 @@ Key design points:
 ## Where in the code
 
 - Abstractions:
-  [Requests.cs](../../src/Kanimambo.SharedKernel/Messaging/Requests.cs),
-  [Handlers.cs](../../src/Kanimambo.SharedKernel/Messaging/Handlers.cs),
+  [IRequest.cs](../../src/Kanimambo.SharedKernel/Messaging/IRequest.cs), [ICommand.cs](../../src/Kanimambo.SharedKernel/Messaging/ICommand.cs), [ICommand{TValue}.cs](../../src/Kanimambo.SharedKernel/Messaging/ICommand{TValue}.cs), [IQuery.cs](../../src/Kanimambo.SharedKernel/Messaging/IQuery.cs), [INotification.cs](../../src/Kanimambo.SharedKernel/Messaging/INotification.cs), [IIdempotentCommand.cs](../../src/Kanimambo.SharedKernel/Messaging/IIdempotentCommand.cs),
+  [IRequestHandler.cs](../../src/Kanimambo.SharedKernel/Messaging/IRequestHandler.cs), [INotificationHandler.cs](../../src/Kanimambo.SharedKernel/Messaging/INotificationHandler.cs), [IPipelineBehavior.cs](../../src/Kanimambo.SharedKernel/Messaging/IPipelineBehavior.cs),
   [IMediator.cs](../../src/Kanimambo.SharedKernel/Messaging/IMediator.cs)
 - Dispatcher: [Mediator.cs](../../src/Kanimambo.SharedKernel/Messaging/Mediator.cs)
 - Registration:
