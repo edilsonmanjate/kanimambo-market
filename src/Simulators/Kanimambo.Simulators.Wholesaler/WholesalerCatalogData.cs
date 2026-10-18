@@ -2,19 +2,6 @@ using System.Globalization;
 
 namespace Kanimambo.Simulators.Wholesaler;
 
-public sealed record WholesalerProductDto(
-    string Code,
-    string Description,
-    string Category,
-    string UnitCode,
-    long PriceCents,
-    string Currency,
-    int Stock,
-    int WeightGrams,
-    string TaxCategory);
-
-public sealed record WholesalerPageDto(int Page, int PageSize, int TotalPages, IReadOnlyList<WholesalerProductDto> Items, int? NextPage);
-
 /// <summary>Deterministic catalog: product families × pack sizes × brands-of-origin, with stable prices and stock.</summary>
 public sealed class WholesalerCatalogData
 {

@@ -3,12 +3,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Domain.Backoffice;
 
-public enum BackofficeOperationStatus
-{
-    Executed,
-    Undone,
-}
-
 /// <summary>
 /// Audit-log entry for a back-office operation: who did what and when, plus the serialized operation
 /// (including the state it needs to be undone).

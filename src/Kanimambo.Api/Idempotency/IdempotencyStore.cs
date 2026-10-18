@@ -3,16 +3,6 @@ using Microsoft.Extensions.Options;
 
 namespace Kanimambo.Api.Idempotency;
 
-internal enum BeginOutcome
-{
-    Started,
-    Replay,
-    InFlight,
-    FingerprintMismatch,
-}
-
-internal sealed record BeginResult(BeginOutcome Outcome, IdempotencyRecord? Existing = null);
-
 /// <summary>
 /// Postgres-backed store. The primary key (scope, key) is the lock: whoever inserts the
 /// in-progress row first executes the request, everybody else replays or is told to wait.

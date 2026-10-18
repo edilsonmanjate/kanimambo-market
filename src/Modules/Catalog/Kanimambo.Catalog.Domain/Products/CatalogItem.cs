@@ -3,9 +3,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Domain.Products;
 
-/// <summary>How many units of a leaf product one unit of an item needs.</summary>
-public sealed record LeafRequirement(SimpleProduct Product, int Quantity);
-
 /// <summary>
 /// Composite component: anything that can be sold — a single product (leaf) or a bundle of items
 /// (composite), which may itself contain bundles. Clients treat both uniformly: price, weight (for

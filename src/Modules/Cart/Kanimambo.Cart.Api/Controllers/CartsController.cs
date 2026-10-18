@@ -8,12 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kanimambo.Cart.Api.Controllers;
 
-public sealed record OpenCartRequest(string DeliveryCity);
-
-public sealed record CartLineRequest(int Quantity);
-
-public sealed record DeliveryCityRequest(string City);
-
 /// <summary>
 /// Carts for guests (the cart id is the key — keep it on the device) and signed-in customers (owner only).
 /// Every change is snapshotted; <c>undo</c> and <c>snapshots/{version}/restore</c> go back in that history.

@@ -6,11 +6,3 @@ namespace Kanimambo.SharedKernel.Web.Idempotency;
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
 public sealed class RequiresIdempotencyKeyAttribute : Attribute;
-
-public static class IdempotencyHeaders
-{
-    public const string Key = "Idempotency-Key";
-
-    /// <summary>Set on responses replayed from the idempotency store instead of being re-executed.</summary>
-    public const string Replayed = "Idempotent-Replayed";
-}

@@ -1,11 +1,5 @@
 namespace Kanimambo.Api.Idempotency;
 
-internal enum IdempotencyRecordStatus
-{
-    InProgress,
-    Completed,
-}
-
 /// <summary>Stored outcome of a write request, keyed by (scope, Idempotency-Key).</summary>
 internal sealed class IdempotencyRecord
 {

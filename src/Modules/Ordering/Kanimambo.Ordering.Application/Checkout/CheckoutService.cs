@@ -11,46 +11,6 @@ using Kanimambo.Shipping.Contracts;
 
 namespace Kanimambo.Ordering.Application.Checkout;
 
-/// <summary>
-/// How the customer wants the order delivered. Every part is optional: without a method, Shipping picks the first
-/// configured method that can serve the order (same-day where possible, otherwise courier).
-/// </summary>
-public sealed record DeliveryChoice(string? Method, string? District, string? PickupPointId)
-{
-    public static readonly DeliveryChoice Default = new(null, null, null);
-}
-
-public sealed record CheckoutDetails(PaymentMethod PaymentMethod, string Phone, string? Nuit, DeliveryChoice Delivery);
-
-public sealed record CheckoutResult(
-    Guid OrderId,
-    long Number,
-    string DisplayNumber,
-    string Status,
-    decimal Subtotal,
-    string PromotionName,
-    decimal Discount,
-    decimal ShippingFee,
-    decimal Total,
-    string DeliveryMethod,
-    DateOnly EstimatedDelivery,
-    string NextStep,
-    bool AlreadyPlaced);
-
-/// <summary>
-/// Facade: turning a cart (or a B2B draft) into an order touches seven subsystems — the cart, catalog prices
-/// and sellers, exchange rates, promotions, shipping quotes (Shipping module), the acceptance chain and the order
-/// itself, plus payment and idempotency. Callers see one operation.
-/// </summary>
-public interface ICheckoutService
-{
-    Task<Result<CheckoutResult>> CheckoutCartAsync(Guid cartId, CheckoutDetails details, CancellationToken cancellationToken);
-
-    Task<Result<CheckoutResult>> SubmitDraftAsync(Guid draftId, CheckoutDetails details, CancellationToken cancellationToken);
-}
-
-internal sealed record BasketLine(Guid ProductId, int Quantity);
-
 internal sealed class CheckoutService(
     ICartReader carts,
     IDraftOrderRepository drafts,

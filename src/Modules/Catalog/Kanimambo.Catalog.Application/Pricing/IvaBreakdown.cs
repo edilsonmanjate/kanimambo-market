@@ -5,8 +5,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Application.Pricing;
 
-public sealed record IvaLine(string Category, decimal Rate, Money Net, Money Iva);
-
 public sealed record IvaBreakdown(IReadOnlyList<IvaLine> Lines, Money Net, Money Iva)
 {
     public Money Gross => Net + Iva;

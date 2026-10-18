@@ -1,12 +1,5 @@
 namespace Kanimambo.SharedKernel.Domain;
 
-public interface IHasDomainEvents
-{
-    IReadOnlyCollection<IDomainEvent> DomainEvents { get; }
-
-    void ClearDomainEvents();
-}
-
 /// <summary>
 /// Consistency boundary: the only entry point for changes inside the aggregate.
 /// Domain events raised here are collected and written to the module outbox on commit.

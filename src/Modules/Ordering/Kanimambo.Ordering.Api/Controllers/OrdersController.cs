@@ -1,0 +1,56 @@
+using Kanimambo.Ordering.Application;
+using Kanimambo.SharedKernel.Messaging;
+using Kanimambo.SharedKernel.Web;
+using Kanimambo.SharedKernel.Web.Security;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Kanimambo.Ordering.Api.Controllers;
+
+[Route("api/orders")]
+public sealed class OrdersController(IMediator mediator) : ApiControllerBase
+{
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new GetOrder(id), cancellationToken));
+
+    [Authorize]
+    [HttpGet("mine")]
+    [ProducesResponseType<IReadOnlyList<OrderDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Mine(CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new ListMyOrders(), cancellationToken));
+
+    /// <summary>Customers can cancel their own orders while the current state allows it.</summary>
+    [Authorize]
+    [HttpPost("{id:guid}/cancel")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Cancel(Guid id, StatusChangeRequest request, CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new ChangeOrderStatus(id, "Cancel", request?.Note), cancellationToken));
+
+    /// <summary>After a failed payment (insufficient balance, timeout...), the customer asks for a new payment request.</summary>
+    [Authorize]
+    [HttpPost("{id:guid}/retry-payment")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RetryPayment(Guid id, CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new ChangeOrderStatus(id, "RetryPayment", null), cancellationToken));
+
+    /// <summary>
+    /// Fulfilment and payment transitions (back-office): RequestPayment, ConfirmPayment (note = gateway reference),
+    /// FailPayment, RetryPayment, StartPreparing, Dispatch, Deliver, Cancel, Refund. Payments normally arrive from the
+    /// Payments module (gateway callbacks); ConfirmPayment here is the manual reconciliation path.
+    /// </summary>
+    [Authorize(Policy = AuthorizationPolicies.Backoffice)]
+    [HttpPost("{id:guid}/transitions/{transition}")]
+    [ProducesResponseType<OrderDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Transition(Guid id, string transition, StatusChangeRequest request, CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new ChangeOrderStatus(id, transition, request?.Note), cancellationToken));
+
+    /// <summary>B2B: start next week's order as a copy of this one.</summary>
+    [Authorize]
+    [HttpPost("{id:guid}/reorder")]
+    [ProducesResponseType<DraftOrderDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Reorder(Guid id, CancellationToken cancellationToken) =>
+        OkOrProblem(await mediator.Send(new ReorderAsDraft(id), cancellationToken));
+}

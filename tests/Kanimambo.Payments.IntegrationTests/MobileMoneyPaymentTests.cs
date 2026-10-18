@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Kanimambo.Payments.Infrastructure.Gateways.Adapters;
 using Kanimambo.SharedKernel.Infrastructure.Webhooks;
 using Kanimambo.Simulators.MobileMoney;
 using Microsoft.Extensions.DependencyInjection;

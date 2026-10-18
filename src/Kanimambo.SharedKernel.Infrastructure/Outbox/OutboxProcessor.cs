@@ -9,22 +9,6 @@ using Microsoft.Extensions.Options;
 
 namespace Kanimambo.SharedKernel.Infrastructure.Outbox;
 
-public sealed class OutboxOptions
-{
-    public const string SectionName = "Outbox";
-
-    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(1);
-
-    public int BatchSize { get; set; } = 50;
-
-    public int MaxAttempts { get; set; } = 10;
-
-    /// <summary>Retry delay after the first failure; doubles with each attempt (capped at five minutes).</summary>
-    public TimeSpan RetryBaseDelay { get; set; } = TimeSpan.FromSeconds(2);
-
-    public TimeSpan LeaseDuration { get; set; } = TimeSpan.FromSeconds(30);
-}
-
 /// <summary>
 /// Observer delivery: polls a module's outbox and notifies every subscriber of each event, each in its own
 /// DI scope (own DbContext, own transaction). A subscriber that throws is recorded and retried with

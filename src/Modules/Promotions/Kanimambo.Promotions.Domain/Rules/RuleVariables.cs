@@ -1,7 +1,5 @@
 namespace Kanimambo.Promotions.Domain.Rules;
 
-public sealed record RuleVariable(string Name, RuleType Type, string Description);
-
 /// <summary>
 /// The vocabulary marketing can use in rules. Rules are type-checked against it when they are saved, so a
 /// typo or a wrong comparison is caught at authoring time, never at checkout.

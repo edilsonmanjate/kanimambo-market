@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Kanimambo.SharedKernel.Results;
 using Kanimambo.SharedKernel.Web;
@@ -8,25 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kanimambo.Api.IntegrationTests.Probes;
-
-public sealed class ProbeState
-{
-    private readonly ConcurrentDictionary<string, int> _counts = new();
-    private readonly ConcurrentDictionary<string, TaskCompletionSource> _gates = new();
-
-    public int Increment(string bucket) => _counts.AddOrUpdate(bucket, 1, (_, count) => count + 1);
-
-    public int Count(string bucket) => _counts.GetValueOrDefault(bucket);
-
-    public TaskCompletionSource Gate(string bucket) =>
-        _gates.GetOrAdd(bucket, _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
-}
-
-public sealed record CounterInput(string? Note);
-
-public sealed record CounterOutput(string Bucket, int Count, string? Note);
-
-public sealed record RequiredNoteInput([Required] string? Note);
 
 /// <summary>Test-only endpoints that stand in for module controllers.</summary>
 [Route("api/_probe")]

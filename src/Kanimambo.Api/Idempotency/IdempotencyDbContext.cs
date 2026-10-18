@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Kanimambo.Api.Idempotency;
@@ -28,16 +27,5 @@ internal sealed class IdempotencyDbContext(DbContextOptions<IdempotencyDbContext
         record.Property(r => r.ResponseContentType).HasMaxLength(256);
         record.Property(r => r.ResponseLocation).HasMaxLength(2048);
         record.HasIndex(r => r.ExpiresAt);
-    }
-}
-
-/// <summary>Lets <c>dotnet ef</c> build the model without Aspire or a running database.</summary>
-internal sealed class IdempotencyDbContextDesignTimeFactory : IDesignTimeDbContextFactory<IdempotencyDbContext>
-{
-    public IdempotencyDbContext CreateDbContext(string[] args)
-    {
-        var options = new DbContextOptionsBuilder<IdempotencyDbContext>();
-        IdempotencyDbContext.Configure(options, "Host=localhost;Database=kanimambo");
-        return new IdempotencyDbContext(options.Options);
     }
 }

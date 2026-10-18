@@ -3,39 +3,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Ordering.Domain;
 
-/// <summary>Domain events carry what their subscribers need, so they can be published without reloading the order.</summary>
-public sealed record OrderPlaced(OrderId OrderId, long Number, string CheckoutSource, Guid CheckoutSourceId, string CustomerId, Money Total, DateTimeOffset OccurredAt)
-    : DomainEvent(OccurredAt);
-
-public sealed record OrderPaid(OrderId OrderId, long Number, string PaymentReference, OrderCustomer Customer, PaymentMethod PaymentMethod, Money Total,
-    IReadOnlyList<OrderLine> Lines, OrderTotals Totals, string DeliveryMethod, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
-
-/// <summary>The order waits for a prepaid payment; <paramref name="Attempt"/> starts at 1 and grows with each retry.</summary>
-public sealed record OrderPaymentRequested(OrderId OrderId, long Number, int Attempt, PaymentMethod PaymentMethod, string CustomerPhone, Money Amount, DateTimeOffset OccurredAt)
-    : DomainEvent(OccurredAt);
-
-public sealed record OrderStatusChanged(OrderId OrderId, long Number, string CustomerPhone, OrderStatus From, OrderStatus To, string? Reason, DateTimeOffset OccurredAt)
-    : DomainEvent(OccurredAt);
-
-/// <summary>
-/// The order left the sellers: Shipping books a courier per parcel. Carries everything Shipping needs, including the
-/// cash the courier must collect for cash-on-delivery orders (zero otherwise).
-/// </summary>
-public sealed record OrderDispatched(OrderId OrderId, long Number, string DeliveryCity, OrderDelivery Delivery, IReadOnlyList<OrderParcel> Parcels,
-    string CustomerPhone, Money CashToCollect, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
-
-/// <summary>How the customer chose to receive the order, as quoted by Shipping at checkout.</summary>
-public sealed record OrderDelivery(string Method, string? District, string? PickupPointId, DateOnly EstimatedDelivery);
-
-/// <summary>One seller's share of the order, as it will travel: from the seller's city, with this weight.</summary>
-public sealed record OrderParcel(Guid SellerId, string OriginCity, decimal WeightKg);
-
-/// <summary>The amounts of an order, all in MZN: subtotal − promotion + shipping = total.</summary>
-public sealed record OrderTotals(Money Subtotal, string PromotionName, Money Discount, Money ShippingFee)
-{
-    public Money Total => Subtotal - Discount + ShippingFee;
-}
-
 /// <summary>
 /// An accepted order and its lifecycle. Behaviour that depends on the status is delegated to the current
 /// <see cref="OrderState"/>; the order itself only knows how to record a transition.

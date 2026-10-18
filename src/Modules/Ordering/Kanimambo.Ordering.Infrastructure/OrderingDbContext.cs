@@ -2,20 +2,10 @@ using Kanimambo.Ordering.Domain;
 using Kanimambo.SharedKernel.Infrastructure.Outbox;
 using Kanimambo.SharedKernel.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Kanimambo.Ordering.Infrastructure;
-
-internal sealed class DraftSnapshotRecord
-{
-    public required Guid DraftId { get; init; }
-
-    public required int Version { get; init; }
-
-    public required string Payload { get; init; }
-}
 
 public sealed class OrderingDbContext(DbContextOptions<OrderingDbContext> options) : DbContext(options)
 {
@@ -143,15 +133,5 @@ public sealed class OrderingDbContext(DbContextOptions<OrderingDbContext> option
         line.Property<decimal>("_lineTotalMzn").HasColumnName("LineTotalMzn").HasPrecision(18, 2);
         line.Ignore(l => l.UnitPrice);
         line.Ignore(l => l.LineTotal);
-    }
-}
-
-internal sealed class OrderingDbContextDesignTimeFactory : IDesignTimeDbContextFactory<OrderingDbContext>
-{
-    public OrderingDbContext CreateDbContext(string[] args)
-    {
-        var options = new DbContextOptionsBuilder<OrderingDbContext>();
-        ModulePersistenceExtensions.UseModuleNpgsql(options, "Host=localhost;Database=kanimambo", OrderingDbContext.Schema);
-        return new OrderingDbContext(options.Options);
     }
 }

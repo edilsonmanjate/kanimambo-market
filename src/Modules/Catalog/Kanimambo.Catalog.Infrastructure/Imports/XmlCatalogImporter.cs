@@ -10,8 +10,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Infrastructure.Imports;
 
-internal sealed record XmlArticle(XElement Element, string? Currency);
-
 /// <summary>
 /// The wholesaler's XML export (Portuguese element names). Format specifics: streamed element by element
 /// (the file can be large), currency declared once on the root, packaging as wholesaler unit codes, and

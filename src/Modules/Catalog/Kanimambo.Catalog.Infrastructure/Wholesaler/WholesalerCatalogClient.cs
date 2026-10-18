@@ -6,17 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace Kanimambo.Catalog.Infrastructure.Wholesaler;
 
-public sealed class WholesalerOptions
-{
-    public const string SectionName = "Catalog:Wholesaler";
-
-    public Uri BaseAddress { get; set; } = new("https+http://wholesaler");
-
-    public int PageSize { get; set; } = 100;
-}
-
-internal sealed record WholesalerPage(int Page, int PageSize, int TotalPages, IReadOnlyList<WholesalerProduct> Items, int? NextPage);
-
 /// <summary>
 /// Iterator over the wholesaler's paginated API. Only the current page is referenced: when its items are
 /// exhausted the next page replaces it, so memory is bounded by one page regardless of catalog size. Pages

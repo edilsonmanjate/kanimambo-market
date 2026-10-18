@@ -1,12 +1,8 @@
 using Kanimambo.Promotions.Contracts;
-using Kanimambo.Promotions.Domain;
 using Kanimambo.Promotions.Domain.Rules;
-using Kanimambo.SharedKernel.Domain;
 using Kanimambo.SharedKernel.Time;
 
 namespace Kanimambo.Promotions.Application;
-
-internal sealed record AppliedPromotion(Guid PromotionId, string Name, Money Discount) : IAppliedPromotion;
 
 /// <summary>
 /// Evaluates every active promotion's rule against the cart and returns the one giving the largest discount

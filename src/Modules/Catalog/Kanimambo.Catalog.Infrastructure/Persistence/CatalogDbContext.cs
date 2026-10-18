@@ -7,7 +7,6 @@ using Kanimambo.Catalog.Domain.Variants;
 using Kanimambo.SharedKernel.Domain;
 using Kanimambo.SharedKernel.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Kanimambo.Catalog.Infrastructure.Persistence;
@@ -136,14 +135,4 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
             entry.Property(e => e.SellerRating).HasPrecision(3, 2);
             entry.Property(e => e.WeightKg).HasPrecision(12, 3);
         });
-}
-
-internal sealed class CatalogDbContextDesignTimeFactory : IDesignTimeDbContextFactory<CatalogDbContext>
-{
-    public CatalogDbContext CreateDbContext(string[] args)
-    {
-        var options = new DbContextOptionsBuilder<CatalogDbContext>();
-        ModulePersistenceExtensions.UseModuleNpgsql(options, "Host=localhost;Database=kanimambo", CatalogDbContext.Schema);
-        return new CatalogDbContext(options.Options);
-    }
 }

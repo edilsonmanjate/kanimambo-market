@@ -9,10 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kanimambo.Catalog.Api.Controllers;
 
-public sealed record PriceAdjustmentRequest(decimal Percentage, string Reason);
-
-public sealed record SuspensionRequest(string Reason);
-
 /// <summary>Audited, undoable back-office operations. Requires a token with the <c>backoffice</c> role.</summary>
 [Route("api/catalog/backoffice")]
 [Authorize(Policy = AuthorizationPolicies.Backoffice)]
