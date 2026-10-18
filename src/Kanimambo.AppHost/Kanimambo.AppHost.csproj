@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Simulators\Kanimambo.Simulators.Wholesaler\Kanimambo.Simulators.Wholesaler.csproj" />
     <ProjectReference Include="..\Simulators\Kanimambo.Simulators.MobileMoney\Kanimambo.Simulators.MobileMoney.csproj" />
     <ProjectReference Include="..\Simulators\Kanimambo.Simulators.Courier\Kanimambo.Simulators.Courier.csproj" />
+    <ProjectReference Include="..\Simulators\Kanimambo.Simulators.Messaging\Kanimambo.Simulators.Messaging.csproj" />
   </ItemGroup>
 
 </Project>
