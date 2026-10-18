@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 5 (Shipping) complete; awaiting approval for Phase 6 (Invoicing).
+**Current phase:** Phase 6 (Invoicing) complete; awaiting approval for Phase 7 (Notifications).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -267,3 +267,20 @@ Decisions taken (see `docs/adr/`):
   - **Fictional couriers.** Txova (same-day) and Mbila (cargo) run in `Kanimambo.Simulators.Courier`. Webhooks go to `POST /api/shipping/webhooks/{courier}`, signed with `WebhookSignature` (moved to `SharedKernel.Infrastructure.Webhooks`, also used by Payments).
   - **Simulator scenarios.** The recipient phone's last four digits choose them: 0101 absent, 0102 refused, 0103 outage on the first booking.
   - **Shared test factory.** It routes `courier.test` to the simulator and webhooks back to the API. Its default courier delay is 5 minutes; `ShippingApiFactory` uses 250 ms.
+- Invoicing (ADR 0010, ADR 0011):
+  - **Prices include IVA (user decision, Phase 6).** net = gross / (1 + rate), IVA = gross − net, per line. The Catalog `IvaBreakdown` now extracts IVA instead of adding it (`TaxableAmount.Gross`). Checkout totals were unchanged.
+  - **Rate table.** `TaxRateTable` is a DI singleton exposed as `Invoicing.Contracts.ITaxRateTable`, with effective-dated rates in `Invoicing:TaxRates` (standard 17 % from 2008, 16 % from 2023). It uses a FrozenDictionary snapshot, swapped atomically on `IOptionsMonitor` reload. Catalog reads it through `InvoicingTaxRates`; `Catalog:TaxRates` was removed.
+  - **Feature flags.** `IFeatureFlags` (SharedKernel) is implemented by `ConfiguredFeatureFlags` (SharedKernel.Infrastructure, `Features:Flags`), registered with `AddFeatureFlags`. Flag names live in `FeatureFlagNames`: `Invoicing.InvoicePdf` is on and `Invoicing.EDeclaracaoXml` is off.
+  - **Who issues.** Sellers issue goods invoices under their `TaxpayerProfile` regime (IvaNormal → FT/NC, Ispc → FS/NS, from config). The marketplace (`Invoicing:Marketplace`, NUIT 400999999) issues the delivery invoice. A seller's invoices always add up to the order total; the promotion discount is spread with `Allocation.Split` (exact cents).
+  - **Invoice requests.** `OrderPaid` creates one `InvoiceRequest` per issuer, holding a jsonb snapshot of the lines. Its status is `AwaitingTaxpayer`, `Issued`, `Rejected` or `Cancelled`. The subscriber never throws for missing fiscal data; `PUT /api/invoicing/taxpayers/{sellerId}` issues the pending requests.
+  - **Numbering.** It is gapless: a `DocumentCounter` (xmin) is saved with the document, and `InvoiceBuilder.Build(nextNumber, now)` / `CreditNote.ForRefund(…, nextNumber, …)` only take a number when the document is valid.
+  - **Refunds.** `OrderStatusChanged` → Refunded produces full credit notes.
+  - **Bundles.** A bundle becomes one line per tax category, through `ICatalogReader.GetTaxProfilesAsync`.
+  - **`OrderPaidIntegrationEvent` fields.** It now also carries CustomerType, CustomerNuit, Subtotal, Discount, ShippingFee and DeliveryMethod.
+  - **EF owned types must not share instances between owners** (each document and request copies its `FiscalParty` and `FiscalLine` with `with { }`). Sharing silently moves rows or leaves them null.
+  - **Visitors.**
+    - Monthly e-Declaração file in CSV / XLSX (ClosedXML) / XML: the layout is ours, so verify it against the AT template.
+    - The PDF uses a hand-written `PdfWriter` (Helvetica, WinAnsi) with no third-party license.
+    - The IVA summary is a visitor too.
+  - **Object pools** live in `InvoicingPools`: `PdfWriter : IResettable`, plus a StringBuilder pool. The benchmark results are in `ObjectPool.md`.
+  - **Demo profiles.** Catalog demo sellers get fiscal profiles from `InvoicingSeeder` (`Invoicing:SeedDemoData` in Development). Tests register their own profiles with random NUITs.

@@ -13,7 +13,7 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**20 of 26 patterns implemented.**
+**25 of 26 patterns implemented** (Bridge follows in Phase 7).
 
 - **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
   **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
@@ -48,6 +48,15 @@ and customers on unstable mobile networks.
   - two courier formats behind one gateway, with signed tracking webhooks (**Adapter**);
   - one parcel per seller, and an order delivered (cash orders paid) when the last parcel arrives
     ([ADR 0009](docs/adr/0009-shipping-consignments-and-couriers.md)).
+- **Phase 6 – Invoicing:**
+  - always-valid invoices: NUITs, gapless series numbers, IVA extracted per line, legal reasons for exemptions (**Builder**);
+  - coherent tax calculator, formatter and series per seller regime, IVA normal or ISPC (**Abstract Factory**);
+  - the monthly e-Declaração file (CSV, XLSX, XML), the invoice PDF and the IVA summary as visitors of one document tree (**Visitor**);
+  - pooled PDF writers and buffers for bulk month-end generation, about 50% fewer allocations (**Object Pool**);
+  - one cached, thread-safe, reloadable IVA rate table with legal history, and feature flags (**Singleton** through DI,
+    [ADR 0010](docs/adr/0010-singletons-through-di.md));
+  - prices include IVA; sellers issue their own invoices and issuing never blocks on missing fiscal data
+    ([ADR 0011](docs/adr/0011-invoicing.md)).
 
 ## Design patterns index
 
@@ -63,23 +72,23 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Iterator | Streaming a slow, paginated wholesaler catalog as `IAsyncEnumerable` | Catalog | 1 | ✅ | [Iterator](docs/patterns/Iterator.md) |
 | Mediator | In-process dispatch of commands/queries/notifications with ordered pipeline behaviors | SharedKernel | 0 | ✅ | [Mediator](docs/patterns/Mediator.md) |
 | Memento | Cart snapshots for customers who lose connectivity: restore snapshot N, undo | Cart | 2 | ✅ | [Memento](docs/patterns/Memento.md) |
-| Observer | `OrderPaid` → stock reservation now (invoice, SMS later), delivered through a transactional outbox | Transversal | 3 | ✅ | [Observer](docs/patterns/Observer.md) |
+| Observer | `OrderPaid` → stock reservation and invoices (SMS in Phase 7); payments and deliveries report back the same way, through transactional outboxes | Transversal | 3–6 | ✅ | [Observer](docs/patterns/Observer.md) |
 | State | Order lifecycle (prepaid and cash on delivery) and asynchronous mobile-money payments (PIN, timeout, late confirmation) | Ordering, Payments | 3–4 | ✅ | [State](docs/patterns/State.md) |
 | Strategy | Shipping cost: same-day by zone and vehicle, courier by destination and weight, free pickup points | Shipping | 5 | ✅ | [Strategy](docs/patterns/Strategy.md) |
 | Template Method | Seller catalog imports (CSV, Excel, XML, wholesaler API) with fixed steps and per-format hooks | Catalog | 1 | ✅ | [Template Method](docs/patterns/TemplateMethod.md) |
-| Visitor | Fiscal document tree → e-Declaração CSV/XLSX/XML, invoice PDF, IVA summary | Invoicing | 6 | ⏳ | — |
+| Visitor | Fiscal document tree → e-Declaração CSV/XLSX/XML, invoice PDF, IVA summary (SAF-T later = one more visitor) | Invoicing | 6 | ✅ | [Visitor](docs/patterns/Visitor.md) |
 
 ### Creational
 
 | Pattern | Business problem | Module | Phase | Status | Docs |
 |---|---|---|---|---|---|
-| Abstract Factory | Coherent component families per tax regime (IVA normal vs ISPC) | Invoicing | 6 | ⏳ | — |
-| Builder | Always-valid `Invoice` (NUITs, series, sequence, exemptions, MZN totals) | Invoicing | 6 | ⏳ | — |
+| Abstract Factory | Coherent component families per tax regime (IVA normal vs ISPC); mixing them is impossible | Invoicing | 6 | ✅ | [Abstract Factory](docs/patterns/AbstractFactory.md) |
+| Builder | Always-valid `Invoice` (NUITs, gapless series numbers, exemptions, MZN totals) | Invoicing | 6 | ✅ | [Builder](docs/patterns/Builder.md) |
 | Factory Method | Payment processor by phone prefix (84/85 M-Pesa, 86/87 e-Mola, 82/83 mKesh, from configuration) | Payments | 4 | ✅ | [Factory Method](docs/patterns/FactoryMethod.md) |
 | Null Object | `GuestCustomer`, `NoPromotion`, `NoExchangeRate` remove null checks from cart pricing | Cart, Promotions | 2 | ✅ | [Null Object](docs/patterns/NullObject.md) |
-| Object Pool | Reusing buffers for bulk PDF / QR / monthly AT file generation | Invoicing | 6 | ⏳ | — |
+| Object Pool | Pooled PDF writers and buffers for bulk PDF and monthly AT file generation (−50% allocations) | Invoicing | 6 | ✅ | [Object Pool](docs/patterns/ObjectPool.md) |
 | Prototype | Weekly B2B reorders deep-cloned from the previous order, then adjusted (with undo) | Ordering | 3 | ✅ | [Prototype](docs/patterns/Prototype.md) |
-| Singleton | Cached IVA/ISPC rate table and feature flags via DI lifetime | Transversal | 6 | ⏳ | — |
+| Singleton | Cached, reloadable IVA rate table (with legal history) and feature flags via DI lifetime, never `static Instance` | Transversal | 6 | ✅ | [Singleton](docs/patterns/Singleton.md) |
 
 ### Structural
 
@@ -128,18 +137,20 @@ src/
   Modules/Ordering/                     {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Payments/                     {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Shipping/                     {Api, Application, Contracts, Domain, Infrastructure}
+  Modules/Invoicing/                    {Api, Application, Contracts, Domain, Infrastructure}
   Simulators/                           ExchangeRates, Wholesaler, MobileMoney, Courier
 tests/
   Kanimambo.SharedKernel.UnitTests/
   Kanimambo.Catalog.UnitTests/  Kanimambo.Promotions.UnitTests/  Kanimambo.Cart.UnitTests/  Kanimambo.Ordering.UnitTests/
-  Kanimambo.Payments.UnitTests/  Kanimambo.Shipping.UnitTests/
+  Kanimambo.Payments.UnitTests/  Kanimambo.Shipping.UnitTests/  Kanimambo.Invoicing.UnitTests/
   Kanimambo.Api.IntegrationTests/       WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
   Kanimambo.Catalog.IntegrationTests/   real API + in-process simulators
   Kanimambo.Promotions.IntegrationTests/  Kanimambo.Cart.IntegrationTests/  Kanimambo.Ordering.IntegrationTests/
   Kanimambo.Payments.IntegrationTests/  real API + mobile-money simulator with compressed delays
   Kanimambo.Shipping.IntegrationTests/  real API + courier simulator with compressed delays
+  Kanimambo.Invoicing.IntegrationTests/
   Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
-  Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight; Object Pool in Phase 6)
+  Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight, Object Pool)
   Kanimambo.Testing/                    shared test host and JWT helpers
 docs/
   patterns/                   one document per pattern
@@ -299,10 +310,35 @@ curl -X POST "$API/api/orders/<orderId>/transitions/Dispatch" -H "Authorization:
 curl "$API/api/shipping/consignments?orderId=<orderId>" -H "Authorization: Bearer $TOKEN"   # parcels + tracking
 ```
 
+### A short tour of Invoicing
+
+Paying an order issues its invoices automatically: one per seller in the seller's own regime, plus
+the marketplace's delivery invoice. The demo sellers have fiscal profiles: Mercearia Xipamanine is
+ISPC, Grossista da Matola is IVA normal.
+
+```bash
+# Builder + Abstract Factory: the documents of a paid order (FT … with IVA, FS … under ISPC), adding up to the total
+curl "$API/api/invoicing/documents?orderId=<orderId>" -H "Authorization: Bearer $TOKEN"
+curl -o fatura.pdf "$API/api/invoicing/documents/<documentId>/pdf" -H "Authorization: Bearer $TOKEN"
+
+# Visitor: an issuer's e-Declaração file for the month (csv | xlsx; xml behind a feature flag) and its IVA summary
+curl -o out.csv "$API/api/invoicing/e-declaracao/400100002/2026/10?format=csv" -H "Authorization: Bearer $TOKEN"
+curl "$API/api/invoicing/iva-summary/400100002/2026/10" -H "Authorization: Bearer $TOKEN"
+
+# A seller without fiscal data: its invoices wait, and are issued when it registers
+curl "$API/api/invoicing/requests?status=AwaitingTaxpayer" -H "Authorization: Bearer $TOKEN"
+curl -X PUT "$API/api/invoicing/taxpayers/<sellerId>" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"nuit":"400200300","legalName":"Loja do Bairro, Lda","regime":"Ispc"}'
+
+# Singleton: the one cached rate table, with its legal history
+curl "$API/api/invoicing/tax-rates?on=2022-06-01"   # standard 17 %
+```
+
 Benchmarks:
 
 ```bash
 dotnet run -c Release --project tests/Kanimambo.Benchmarks -- --filter "*Flyweight*"
+dotnet run -c Release --project tests/Kanimambo.Benchmarks -- --filter "*ObjectPool*" --job short
 dotnet run -c Release --project tests/Kanimambo.Benchmarks -- --retained
 ```
 
@@ -323,6 +359,6 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 | 3 ✅ | Ordering & Checkout: State, Chain of Responsibility, Prototype, Facade, Observer + outbox |
 | 4 ✅ | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |
 | 5 ✅ | Shipping: Strategy, courier Adapter, simulator |
-| 6 | Invoicing: Builder, Abstract Factory, Visitor, Object Pool + benchmarks, Singleton |
+| 6 ✅ | Invoicing: Builder, Abstract Factory, Visitor, Object Pool + benchmarks, Singleton |
 | 7 | Notifications: Bridge |
 | 8 | Polish: C4 diagrams, end-to-end `.http` flow, badges, demo |
