@@ -61,16 +61,16 @@ public sealed class BundleCompositeTests
     }
 
     [Fact]
-    public void Iva_is_calculated_per_component_because_rates_differ()
+    public void Iva_is_extracted_per_component_because_rates_differ()
     {
         var iva = IvaBreakdown.Calculate(CabazDoMes().TaxableAmounts(1), FixedTaxRates.Mozambique).Value;
 
         iva.Lines.Select(l => (l.Category, l.Net.Amount, l.Iva.Amount)).ShouldBe([
             ("exempt", 1_850m + 620m, 0m),
-            ("standard", 720m + 475m, 191.20m),
+            ("standard", 1_030.17m, 164.83m),   // 720 + 475 = 1 195 IVA included: 1 195 / 1.16
         ]);
-        iva.Net.ShouldBe(Money.Mzn(3_665m));
-        iva.Gross.ShouldBe(Money.Mzn(3_856.20m));
+        iva.Net.ShouldBe(Money.Mzn(3_500.17m));
+        iva.Gross.ShouldBe(Money.Mzn(3_665m));     // prices include IVA: the gross is what the customer pays
     }
 
     [Fact]

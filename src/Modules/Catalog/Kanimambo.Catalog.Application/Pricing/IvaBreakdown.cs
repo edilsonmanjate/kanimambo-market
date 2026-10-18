@@ -12,8 +12,9 @@ public sealed record IvaBreakdown(IReadOnlyList<IvaLine> Lines, Money Net, Money
     public Money Gross => Net + Iva;
 
     /// <summary>
-    /// Groups the composite's taxable amounts by category and applies each category's configured rate.
-    /// Used for display; the fiscal document calculation lives in Invoicing (Phase 6).
+    /// Groups the composite's taxable amounts by category and extracts each category's IVA from it: prices are
+    /// what the customer pays, IVA included (net = gross / (1 + rate), IVA = gross − net). Used for display; the
+    /// fiscal documents are calculated by the Invoicing module with the same rule.
     /// </summary>
     public static Result<IvaBreakdown> Calculate(IEnumerable<TaxableAmount> amounts, ITaxRateTable rates)
     {
@@ -29,8 +30,9 @@ public sealed record IvaBreakdown(IReadOnlyList<IvaLine> Lines, Money Net, Money
                 return rate.Error;
             }
 
-            var net = group.Select(a => a.Net).Aggregate((total, next) => total + next);
-            lines.Add(new IvaLine(group.Key.Code, rate.Value, net, net * rate.Value));
+            var gross = group.Select(a => a.Gross).Aggregate((total, next) => total + next);
+            var net = Money.Of(gross.Amount / (1m + rate.Value), gross.Currency);
+            lines.Add(new IvaLine(group.Key.Code, rate.Value, net, gross - net));
         }
 
         if (lines.Count == 0)

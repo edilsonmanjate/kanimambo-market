@@ -51,11 +51,8 @@ public static class CatalogInfrastructureExtensions
         services.AddScoped<ICatalogReader, CatalogReader>();
         services.AddScoped<ICurrencyConverter, CurrencyConverter>();
 
-        services.AddOptions<TaxRatesOptions>()
-            .Bind(builder.Configuration.GetSection(TaxRatesOptions.SectionName))
-            .Validate(o => o.Rates.Count > 0 && o.Rates.Values.All(r => r is >= 0m and < 1m), "Tax rates must be fractions between 0 and 1.")
-            .ValidateOnStart();
-        services.AddSingleton<ITaxRateTable, ConfiguredTaxRateTable>();
+        // IVA rates come from the Invoicing module's cached rate table (a DI singleton), through its contract.
+        services.AddSingleton<ITaxRateTable, InvoicingTaxRates>();
 
         // Template Method: one importer per format, all sharing the same fixed pipeline.
         services.AddScoped<ICatalogBatchWriter, CatalogBatchWriter>();
