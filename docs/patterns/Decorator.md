@@ -69,7 +69,7 @@ flowchart LR
 
 ## Where in the code
 
-- [GatewayDecorators.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Decorators/GatewayDecorators.cs)
+- [MobileMoneyGatewayDecorator.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Decorators/MobileMoneyGatewayDecorator.cs), [LoggingGatewayDecorator.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Decorators/LoggingGatewayDecorator.cs), [MetricsGatewayDecorator.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Decorators/MetricsGatewayDecorator.cs), [CachingGatewayDecorator.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Decorators/CachingGatewayDecorator.cs), [RetryingGatewayDecorator.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/Gateways/Decorators/RetryingGatewayDecorator.cs)
 - Composition: `AddGateway` in
   [PaymentsInfrastructureExtensions.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/PaymentsInfrastructureExtensions.cs)
   (one keyed singleton per operator)

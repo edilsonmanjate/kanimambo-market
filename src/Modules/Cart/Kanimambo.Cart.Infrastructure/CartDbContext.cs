@@ -1,22 +1,9 @@
 using Kanimambo.Cart.Domain;
 using Kanimambo.SharedKernel.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Kanimambo.Cart.Infrastructure;
-
-/// <summary>A stored snapshot: the serialized memento, opaque to the database.</summary>
-internal sealed class CartSnapshotRecord
-{
-    public required Guid CartId { get; init; }
-
-    public required int Version { get; init; }
-
-    public required DateTimeOffset TakenAt { get; init; }
-
-    public required string Payload { get; init; }
-}
 
 public sealed class CartDbContext(DbContextOptions<CartDbContext> options) : DbContext(options)
 {
@@ -68,15 +55,5 @@ public sealed class CartDbContext(DbContextOptions<CartDbContext> options) : DbC
             snapshot.HasKey(s => new { s.CartId, s.Version });
             snapshot.Property(s => s.Payload).HasColumnType("jsonb");
         });
-    }
-}
-
-internal sealed class CartDbContextDesignTimeFactory : IDesignTimeDbContextFactory<CartDbContext>
-{
-    public CartDbContext CreateDbContext(string[] args)
-    {
-        var options = new DbContextOptionsBuilder<CartDbContext>();
-        ModulePersistenceExtensions.UseModuleNpgsql(options, "Host=localhost;Database=kanimambo", CartDbContext.Schema);
-        return new CartDbContext(options.Options);
     }
 }

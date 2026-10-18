@@ -59,7 +59,7 @@ end to end: one page in the iterator, one batch in the change tracker.
 ## Where in the code
 
 - Port:
-  [Wholesaler.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Abstractions/Wholesaler.cs)
+  [IWholesalerCatalog.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Abstractions/IWholesalerCatalog.cs)
 - Iterator:
   [WholesalerCatalogClient.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Wholesaler/WholesalerCatalogClient.cs)
 - Consumer:

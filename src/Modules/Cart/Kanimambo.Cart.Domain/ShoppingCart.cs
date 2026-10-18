@@ -3,39 +3,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Cart.Domain;
 
-public readonly record struct CartId(Guid Value)
-{
-    /// <summary>Random (v4) on purpose: a guest cart id is what grants access to it, so it must not be guessable.</summary>
-    public static CartId New() => new(Guid.NewGuid());
-
-    public override string ToString() => Value.ToString();
-}
-
-public sealed class CartLine
-{
-    private CartLine()
-    {
-    }
-
-    internal CartLine(Guid productId, string sku, string name, int quantity)
-    {
-        ProductId = productId;
-        Sku = sku;
-        Name = name;
-        Quantity = quantity;
-    }
-
-    public Guid ProductId { get; private set; }
-
-    public string Sku { get; private set; } = string.Empty;
-
-    public string Name { get; private set; } = string.Empty;
-
-    public int Quantity { get; private set; }
-
-    internal void ChangeQuantity(int quantity) => Quantity = quantity;
-}
-
 /// <summary>
 /// A shopping cart (the Memento originator). Every change bumps <see cref="Version"/>; the application stores
 /// a <see cref="CartMemento"/> after each change so a customer who lost connectivity, or changed device,

@@ -77,11 +77,11 @@ sequenceDiagram
 ## Where in the code
 
 - [InvoiceBuilder.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/InvoiceBuilder.cs)
-- [FiscalDocuments.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/FiscalDocuments.cs) (`Invoice`,
+- [Invoice.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/Invoice.cs), [CreditNote.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/CreditNote.cs) (`Invoice`,
   whose constructor is internal; `CreditNote.ForRefund` also takes its number last)
 - Used by `TryIssueAsync` in
-  [InvoicingRequests.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/InvoicingRequests.cs)
-- `DocumentCounter` in [Taxpayers.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/Taxpayers.cs)
+  [InvoicingHandlers.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/InvoicingHandlers.cs)
+- `DocumentCounter` in [DocumentCounter.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/DocumentCounter.cs)
 
 ## Tests
 

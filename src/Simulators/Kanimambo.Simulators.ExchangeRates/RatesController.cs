@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Kanimambo.Simulators.ExchangeRates;
 
-public sealed record RateResponse(string Base, string Quote, DateOnly Date, decimal Rate, string Source);
-
 [ApiController]
 [Route("api/rates")]
 public sealed class RatesController(SimulatorOptions options, TimeProvider timeProvider) : ControllerBase

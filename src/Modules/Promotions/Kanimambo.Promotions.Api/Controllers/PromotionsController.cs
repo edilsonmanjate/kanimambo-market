@@ -8,16 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kanimambo.Promotions.Api.Controllers;
 
-public sealed record CreatePromotionRequest(
-    string Name,
-    string Rule,
-    string DiscountKind,
-    decimal DiscountValue,
-    DateOnly? ValidFrom,
-    DateOnly? ValidUntil);
-
-public sealed record ValidateRuleRequest(string Rule);
-
 /// <summary>Promotions written by marketing as rules, e.g. <c>cart.total &gt;= 2500 AND customer.city = "Maputo"</c>.</summary>
 [Route("api/promotions")]
 [Authorize(Policy = AuthorizationPolicies.Backoffice)]

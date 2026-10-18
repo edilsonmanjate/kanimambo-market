@@ -4,20 +4,6 @@ using Kanimambo.Shipping.Contracts;
 
 namespace Kanimambo.Shipping.Application.Pricing;
 
-/// <summary>The registered strategies, found by method name. This lookup replaces the switch over delivery methods.</summary>
-public sealed class ShippingStrategies(IEnumerable<IShippingStrategy> strategies)
-{
-    private readonly Dictionary<string, IShippingStrategy> _byMethod =
-        strategies.ToDictionary(s => s.Method, StringComparer.OrdinalIgnoreCase);
-
-    public IReadOnlyCollection<IShippingStrategy> All => _byMethod.Values;
-
-    public Result<IShippingStrategy> Find(string method) =>
-        _byMethod.TryGetValue(method, out var strategy)
-            ? Result.Success(strategy)
-            : Error.Validation(new FieldError("deliveryMethod", $"Unknown delivery method '{method}'. Use one of: {string.Join(", ", _byMethod.Keys)}."));
-}
-
 /// <summary>
 /// Prices an order's delivery. An order has one parcel per seller; every parcel is quoted by the same strategy
 /// (the customer chose one method) and the fees add up. The order arrives when its slowest parcel does.

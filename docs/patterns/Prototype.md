@@ -46,11 +46,11 @@ sequenceDiagram
 
 ## Where in the code
 
-- [OrderBasics.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/OrderBasics.cs)
+- [IPrototype.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/IPrototype.cs), [OrderLine.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/OrderLine.cs)
   (`IPrototype<T>`, `OrderLine.DeepClone`)
 - [DraftOrder.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/DraftOrder.cs) (`CloneFrom`,
   memento)
-- [OrderRequests.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/OrderRequests.cs)
+- [DraftOrderHandlers.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/DraftOrderHandlers.cs)
   (`ReorderAsDraft`, `SetDraftLine`, `UndoDraftChange`)
 
 ## Tests

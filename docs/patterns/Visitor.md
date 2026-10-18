@@ -84,9 +84,9 @@ unit test shows the idea with a throwaway visitor that counts lines.
 
 ## Where in the code
 
-- Tree and interface: [FiscalDocuments.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/FiscalDocuments.cs)
+- Tree and interface: [IFiscalDocumentVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/IFiscalDocumentVisitor.cs), [FiscalPeriod.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/FiscalPeriod.cs), [FiscalDocument.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Domain/FiscalDocument.cs)
 - IVA summary: [IvaSummaryVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Application/Visitors/IvaSummaryVisitor.cs)
-- Monthly files, the PDF visitor and the exporter: [DocumentVisitors.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/DocumentVisitors.cs)
+- Monthly files, the PDF visitor and the exporter: [DeclarationVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/DeclarationVisitor.cs), [EDeclaracaoCsvVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/EDeclaracaoCsvVisitor.cs), [EDeclaracaoXlsxVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/EDeclaracaoXlsxVisitor.cs), [EDeclaracaoXmlVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/EDeclaracaoXmlVisitor.cs), [InvoicePdfVisitor.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/InvoicePdfVisitor.cs), [MonthlyDeclarationExporter.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/MonthlyDeclarationExporter.cs)
 - Endpoints:
   - `GET /api/invoicing/e-declaracao/{nuit}/{year}/{month}?format=csv|xlsx|xml`
   - `GET /api/invoicing/iva-summary/{nuit}/{year}/{month}`

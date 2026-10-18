@@ -72,9 +72,9 @@ snapshot, and `POST /api/order-drafts/{id}/undo` lets the customer or the back-o
   [CartMemento.cs](../../src/Modules/Cart/Kanimambo.Cart.Domain/CartMemento.cs)
 - Caretaker port and use:
   [CartModule.cs](../../src/Modules/Cart/Kanimambo.Cart.Application/CartModule.cs),
-  [CartRequests.cs](../../src/Modules/Cart/Kanimambo.Cart.Application/CartRequests.cs)
+  [CartHandlers.cs](../../src/Modules/Cart/Kanimambo.Cart.Application/CartHandlers.cs)
 - Storage:
-  [CartPersistence.cs](../../src/Modules/Cart/Kanimambo.Cart.Infrastructure/CartPersistence.cs),
+  [CartHistory.cs](../../src/Modules/Cart/Kanimambo.Cart.Infrastructure/CartHistory.cs), [CartRepository.cs](../../src/Modules/Cart/Kanimambo.Cart.Infrastructure/CartRepository.cs),
   [CartDbContext.cs](../../src/Modules/Cart/Kanimambo.Cart.Infrastructure/CartDbContext.cs) (`xmin`)
 - Endpoints:
   [CartsController.cs](../../src/Modules/Cart/Kanimambo.Cart.Api/Controllers/CartsController.cs)

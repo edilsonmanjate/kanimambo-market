@@ -7,8 +7,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Infrastructure.Imports;
 
-internal sealed record CsvRow(IReadOnlyDictionary<string, string> Fields, int FieldCount, int ExpectedFieldCount);
-
 /// <summary>
 /// CSV exported from the seller's spreadsheet. Format specifics: <c>;</c> or <c>,</c> separator detected
 /// from the header, quoted fields, and Portuguese decimals (<c>1.250,50</c>).

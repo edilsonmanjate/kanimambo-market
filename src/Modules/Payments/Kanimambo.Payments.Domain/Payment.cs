@@ -3,43 +3,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Payments.Domain;
 
-/// <summary>Mobile-money operators: M-Pesa (Vodacom), e-Mola (Movitel), mKesh (Tmcel).</summary>
-public enum MobileOperator
-{
-    MPesa,
-    EMola,
-    MKesh,
-}
-
-/// <summary>Why a payment did not happen — one vocabulary, whatever the operator's native code was.</summary>
-public enum PaymentFailureReason
-{
-    InsufficientBalance,
-    DuplicateTransaction,
-    InvalidNumber,
-    Timeout,
-    Rejected,
-    GatewayUnavailable,
-    UnknownOperator,
-    WalletMismatch,
-    UnsupportedMethod,
-}
-
-public enum PaymentStatus
-{
-    Initiated,
-    AwaitingCustomerPin,
-    Confirmed,
-    Failed,
-    TimedOut,
-}
-
-public sealed record PaymentConfirmed(Guid PaymentId, Guid OrderId, int Attempt, string Reference, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
-
-public sealed record PaymentFailed(Guid PaymentId, Guid OrderId, int Attempt, PaymentFailureReason Reason, string Detail, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
-
-public sealed record PaymentTransition(PaymentStatus From, PaymentStatus To, DateTimeOffset At, string? Detail);
-
 /// <summary>
 /// One attempt to collect the money for an order. Mobile money is asynchronous: the operator accepts the
 /// request, the customer confirms with their PIN on the phone, and the outcome arrives later by callback —

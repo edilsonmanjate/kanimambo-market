@@ -82,7 +82,7 @@ Design points:
 - Uniform use:
   [GetProductDetails.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Products/GetProductDetails.cs)
 - Tree loading:
-  [Repositories.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Persistence/Repositories.cs);
+  [CatalogItemRepository.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Persistence/CatalogItemRepository.cs);
   SQL twin:
   [CatalogEntriesViewSql.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Persistence/CatalogEntriesViewSql.cs)
 

@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Kanimambo.Invoicing.Application;
 using Kanimambo.Invoicing.Application.Regimes;
 using Kanimambo.Invoicing.Application.Tax;
 using Kanimambo.Invoicing.Contracts;

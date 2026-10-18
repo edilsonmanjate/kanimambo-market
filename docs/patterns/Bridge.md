@@ -97,11 +97,11 @@ DI line. A new message is one class plus a request record. Neither touches the o
 
 ## Where in the code
 
-- Abstraction, implementor interface and messages: [Bridge.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/Bridge.cs)
+- Abstraction, implementor interface and messages: [CustomerNotification.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/CustomerNotification.cs), [INotificationChannel.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/INotificationChannel.cs), [OrderConfirmation.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/OrderConfirmation.cs), [PaymentReminder.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/PaymentReminder.cs), [DeliveryUpdate.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/DeliveryUpdate.cs), [InvoiceAvailable.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/Messages/InvoiceAvailable.cs)
 - Requests, subscribers and the dispatcher (channel choice and fallback):
-  [NotificationRequests.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/NotificationRequests.cs)
-- Channels, GSM-7 conversion and gateway calls: [Channels.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Channels/Channels.cs)
-- Preferences and the delivery log: [Notifications.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Domain/Notifications.cs)
+  [NotificationHandlers.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/NotificationHandlers.cs), [NotificationSubscribers.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/NotificationSubscribers.cs), [MessageRequest.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Application/MessageRequest.cs)
+- Channels, GSM-7 conversion and gateway calls: [SmsChannel.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Channels/SmsChannel.cs), [WhatsAppChannel.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Channels/WhatsAppChannel.cs), [EmailChannel.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Channels/EmailChannel.cs), [Gsm7Text.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Channels/Gsm7Text.cs)
+- Preferences and the delivery log: [ContactPreferences.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Domain/ContactPreferences.cs), [SentNotification.cs](../../src/Modules/Notifications/Kanimambo.Notifications.Domain/SentNotification.cs)
 - Simulator (enforces GSM-7 and 160 characters): [MessagingSimulator.cs](../../src/Simulators/Kanimambo.Simulators.Messaging/MessagingSimulator.cs)
 
 ## Tests

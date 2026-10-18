@@ -11,8 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kanimambo.Invoicing.Api.Controllers;
 
-public sealed record TaxpayerRequest(string Nuit, string LegalName, string? Address, string Regime);
-
 /// <summary>Fiscal documents and seller fiscal profiles (back-office).</summary>
 [Authorize(Policy = AuthorizationPolicies.Backoffice)]
 [Route("api/invoicing")]

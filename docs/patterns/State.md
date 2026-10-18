@@ -98,19 +98,19 @@ stateDiagram-v2
 
 ## Where in the code
 
-- [OrderStates.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/OrderStates.cs) (states)
+- [OrderState.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/OrderState.cs), [AwaitingPaymentState.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/AwaitingPaymentState.cs), [PaymentFailedState.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/PaymentFailedState.cs) (states)
 - [Order.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Domain/Order.cs) (context)
-- [OrderRequests.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/OrderRequests.cs)
+- [OrderHandlers.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/OrderHandlers.cs)
   (`ChangeOrderStatus`)
 - `POST /api/orders/{id}/transitions/{transition}` (back-office), and `POST /api/orders/{id}/cancel`
   and `POST /api/orders/{id}/retry-payment` (owner)
 - Payments:
-  - [PaymentStates.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/PaymentStates.cs) (states)
+  - [PaymentState.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/PaymentState.cs), [AwaitingCustomerPinState.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/AwaitingCustomerPinState.cs), [TimedOutState.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/TimedOutState.cs) (states)
   - [Payment.cs](../../src/Modules/Payments/Kanimambo.Payments.Domain/Payment.cs) (context)
   - `PaymentTimeoutMonitor` in
-    [PaymentsInfrastructure.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/PaymentsInfrastructure.cs)
+    [PaymentTimeoutMonitor.cs](../../src/Modules/Payments/Kanimambo.Payments.Infrastructure/PaymentTimeoutMonitor.cs)
 - Payment outcomes reach Ordering through the outbox:
-  [PaymentOutcomes.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Payments/PaymentOutcomes.cs)
+  [PaymentOutcomeSubscribers.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Payments/PaymentOutcomeSubscribers.cs), [PaymentOutcomeHandlers.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Application/Payments/PaymentOutcomeHandlers.cs)
 
 ## Tests
 

@@ -1,23 +1,12 @@
 using Kanimambo.Ordering.Application;
-using Kanimambo.SharedKernel.Domain;
 using Kanimambo.SharedKernel.Infrastructure.Persistence;
 using Kanimambo.SharedKernel.Messaging;
-using Kanimambo.SharedKernel.Results;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Kanimambo.Ordering.Infrastructure;
-
-public sealed class OrderingOptions
-{
-    public const string SectionName = "Ordering";
-
-    public int MaxOrdersPerPhonePerDay { get; set; } = 5;
-
-    public decimal MaxValuePerPhonePerDayMzn { get; set; } = 100_000m;
-}
 
 public static class OrderingInfrastructureExtensions
 {

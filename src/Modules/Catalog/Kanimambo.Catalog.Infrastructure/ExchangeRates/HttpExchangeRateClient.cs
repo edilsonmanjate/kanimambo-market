@@ -7,18 +7,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Infrastructure.ExchangeRates;
 
-public sealed class ExchangeRatesOptions
-{
-    public const string SectionName = "Catalog:ExchangeRates";
-
-    public Uri BaseAddress { get; set; } = new("https+http://exchange-rates");
-
-    /// <summary>Upstream quota the proxy enforces (the rates API rejects bursts with 429).</summary>
-    public int MaxUpstreamCallsPerMinute { get; set; } = 20;
-}
-
-internal sealed record ExchangeRateResponse(string Base, string Quote, DateOnly Date, decimal Rate);
-
 /// <summary>
 /// The real subject: calls the (slow, rate-limited) exchange-rate API. Locally that API is the
 /// exchange-rate simulator. Never used directly by the application — always through the proxy.

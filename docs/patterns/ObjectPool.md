@@ -88,7 +88,7 @@ for this pool.
 - [PdfWriter.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/PdfWriter.cs)
   (`PdfWriter : IResettable`, `InvoicingPools`)
 - Borrowers: `MonthlyDeclarationExporter` and `FiscalDocumentPdfRenderer` in
-  [DocumentVisitors.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/DocumentVisitors.cs)
+  [MonthlyDeclarationExporter.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/MonthlyDeclarationExporter.cs), [FiscalDocumentPdfRenderer.cs](../../src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Documents/FiscalDocumentPdfRenderer.cs)
 - Benchmark: [ObjectPoolBenchmarks.cs](../../tests/Kanimambo.Benchmarks/ObjectPool/ObjectPoolBenchmarks.cs)
 
 ## Tests

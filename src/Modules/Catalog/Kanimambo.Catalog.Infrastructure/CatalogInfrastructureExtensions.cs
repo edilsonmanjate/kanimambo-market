@@ -11,7 +11,6 @@ using Kanimambo.Catalog.Infrastructure.Persistence;
 using Kanimambo.Catalog.Infrastructure.Tax;
 using Kanimambo.Catalog.Infrastructure.Wholesaler;
 using Kanimambo.SharedKernel.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,9 +1,6 @@
 using System.Reflection;
-using NetArchTest.Rules;
 
 namespace Kanimambo.ArchitectureTests;
-
-public sealed record ModuleAssembly(string Module, string Layer, Assembly Assembly);
 
 /// <summary>
 /// Discovers every Kanimambo assembly next to the tests, so module rules apply automatically as

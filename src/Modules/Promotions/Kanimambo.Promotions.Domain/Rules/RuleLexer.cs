@@ -1,53 +1,6 @@
-using System.Globalization;
 using System.Text;
 
 namespace Kanimambo.Promotions.Domain.Rules;
-
-internal enum TokenKind
-{
-    Number,
-    Text,
-    Identifier,
-    And,
-    Or,
-    Not,
-    In,
-    True,
-    False,
-    Equal,
-    NotEqual,
-    Greater,
-    GreaterOrEqual,
-    Less,
-    LessOrEqual,
-    LeftParen,
-    RightParen,
-    LeftBracket,
-    RightBracket,
-    Comma,
-    End,
-}
-
-/// <summary>A token with its 0-based position in the rule text.</summary>
-internal sealed record Token(TokenKind Kind, string Text, int Position, int Length)
-{
-    public decimal Number => decimal.Parse(Text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
-
-    public string Describe() => Kind switch
-    {
-        TokenKind.End => "end of rule",
-        TokenKind.Text => $"\"{Text}\"",
-        _ => $"'{Text}'",
-    };
-}
-
-/// <summary>Thrown inside the lexer/parser; turned into a <see cref="RuleDiagnostic"/> at the boundary.</summary>
-internal sealed class RuleSyntaxException(int position, int length, string message) : Exception(message)
-{
-    public int Position { get; } = position;
-
-    public int Length { get; } = length;
-}
 
 /// <summary>Tokenizer: turns rule text into tokens. Keywords and identifiers are case-insensitive.</summary>
 internal static class RuleLexer

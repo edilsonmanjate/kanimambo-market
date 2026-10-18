@@ -102,7 +102,7 @@ cut-off and the pickup points live in the `Shipping` section of `appsettings.jso
 
 ## Tests
 
-- [ShippingStrategyTests](../../tests/Kanimambo.Shipping.UnitTests/Strategy/ShippingStrategyTests.cs):
+- [SameDayStrategyTests](../../tests/Kanimambo.Shipping.UnitTests/Strategy/SameDayStrategyTests.cs), [CourierStrategyTests](../../tests/Kanimambo.Shipping.UnitTests/Strategy/CourierStrategyTests.cs), [PickupStrategyTests](../../tests/Kanimambo.Shipping.UnitTests/Strategy/PickupStrategyTests.cs):
   - same-day:
     - zone fees by district, and the city's default zone;
     - motorbike or txopela by weight, including the 20 kg boundary;
@@ -123,7 +123,7 @@ cut-off and the pickup points live in the `Shipping` section of `appsettings.jso
   - one parcel a method can't carry refuses the whole method;
   - options are listed cheapest first;
   - a **new strategy works without changing the quoter**.
-- [ShippingTests](../../tests/Kanimambo.Shipping.IntegrationTests/ShippingTests.cs), over HTTP with the real
+- [ShippingQuoteTests](../../tests/Kanimambo.Shipping.IntegrationTests/ShippingQuoteTests.cs), over HTTP with the real
   configuration:
   - the options for a cart, in order;
   - 12 kg to Beira costs 625 MZN with a delivery date three days out;

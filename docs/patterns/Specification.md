@@ -76,10 +76,10 @@ filters. `CatalogSearch` (Infrastructure) applies the specification to the view 
   [Specification.cs](../../src/Kanimambo.SharedKernel/Specifications/Specification.cs),
   [SpecificationExtensions.cs](../../src/Kanimambo.SharedKernel/Specifications/SpecificationExtensions.cs)
 - Catalog rules:
-  [CatalogSpecifications.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/CatalogSpecifications.cs),
+  [InStock.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/InStock.cs), [PriceBetweenMzn.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/PriceBetweenMzn.cs), [PricedInCurrencyBetween.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/PricedInCurrencyBetween.cs), [InCategory.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/InCategory.cs), [DeliversTo.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/DeliversTo.cs), [SellerRatingAtLeast.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/SellerRatingAtLeast.cs), [NameContains.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/NameContains.cs),
   [SearchCatalog.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Search/SearchCatalog.cs)
 - Execution:
-  [Repositories.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Persistence/Repositories.cs)
+  [CatalogSearch.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Persistence/CatalogSearch.cs)
   (`CatalogSearch`); view:
   [CatalogEntriesViewSql.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Persistence/CatalogEntriesViewSql.cs)
 

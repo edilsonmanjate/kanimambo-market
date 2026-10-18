@@ -81,11 +81,11 @@ not in who is creating.
 
 ## Where in the code
 
-- [PaymentProcessors.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Processing/PaymentProcessors.cs)
+- [PaymentProcessorFactory.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Processing/PaymentProcessorFactory.cs), [OperatorDirectory.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Processing/OperatorDirectory.cs), [MobileMoneyProcessor.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Processing/MobileMoneyProcessor.cs), [CardProcessor.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/Processing/CardProcessor.cs)
   (`PaymentProcessorFactory`, `OperatorDirectory`, `MobileMoneyProcessor`, `CardProcessor`)
 - Prefixes in [appsettings.json](../../src/Kanimambo.Api/appsettings.json) (`Payments:Operators`)
 - Used by `PaymentHandlers.Handle(StartPayment)` in
-  [PaymentRequests.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/PaymentRequests.cs)
+  [PaymentHandlers.cs](../../src/Modules/Payments/Kanimambo.Payments.Application/PaymentHandlers.cs)
 
 ## Tests
 

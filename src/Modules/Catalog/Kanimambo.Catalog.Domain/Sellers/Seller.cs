@@ -3,16 +3,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Domain.Sellers;
 
-public enum SellerStatus
-{
-    Active,
-    Suspended,
-}
-
-public sealed record SellerSuspended(SellerId SellerId, string Reason, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
-
-public sealed record SellerReactivated(SellerId SellerId, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
-
 /// <summary>A local shop, wholesaler or producer selling on the marketplace.</summary>
 public sealed class Seller : AggregateRoot<SellerId>
 {

@@ -2,10 +2,6 @@ using Kanimambo.Invoicing.Domain;
 
 namespace Kanimambo.Invoicing.Application.Visitors;
 
-public sealed record IvaSummaryLine(string TaxCategory, decimal Rate, decimal Net, decimal Iva, decimal Gross);
-
-public sealed record IvaSummary(string IssuerNuit, int Year, int Month, int Invoices, int CreditNotes, IReadOnlyList<IvaSummaryLine> Lines, decimal Net, decimal Iva, decimal Gross);
-
 /// <summary>
 /// Visitor: IVA per rate for a month — what the issuer owes. Credit notes reduce the amounts. Lines that carry no IVA
 /// (exempt, or ISPC) are reported separately by category and rate 0.

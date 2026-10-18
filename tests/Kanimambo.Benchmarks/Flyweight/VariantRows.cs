@@ -3,15 +3,6 @@ using Kanimambo.Catalog.Domain.Variants;
 
 namespace Kanimambo.Benchmarks.Flyweight;
 
-/// <summary>One parsed import row. Every row has its own string instances, as a CSV/XML parser produces.</summary>
-public sealed record VariantRow(string Sku, decimal Price, int Stock, string Packaging, decimal PackSize, string Unit, string? Size, string? Color);
-
-/// <summary>Without the pattern: every product carries its own copy of the variant attributes.</summary>
-public sealed record DuplicatedVariant(string Sku, decimal Price, int Stock, string Packaging, decimal PackSize, string Unit, string? Size, string? Color);
-
-/// <summary>With the pattern: extrinsic state per product, intrinsic state shared through the pool.</summary>
-public sealed record SharedVariant(string Sku, decimal Price, int Stock, VariantAttributes Attributes);
-
 public static class VariantRows
 {
     private static readonly (string Packaging, decimal PackSize, string Unit, string? Size, string? Color)[] Combinations =

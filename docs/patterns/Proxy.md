@@ -64,7 +64,7 @@ called.
 ## Where in the code
 
 - Port:
-  [ExchangeRates.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Abstractions/ExchangeRates.cs)
+  [IExchangeRateProvider.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Abstractions/IExchangeRateProvider.cs)
 - Proxy:
   [CachingExchangeRateProxy.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/ExchangeRates/CachingExchangeRateProxy.cs);
   subject:

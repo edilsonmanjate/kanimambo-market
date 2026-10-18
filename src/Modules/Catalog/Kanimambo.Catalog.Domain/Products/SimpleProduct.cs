@@ -4,16 +4,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Domain.Products;
 
-public sealed record ProductDetails(
-    string Sku,
-    string Name,
-    string Category,
-    VariantAttributes Variant,
-    Money Price,
-    int Stock,
-    decimal WeightKg,
-    TaxCategory TaxCategory);
-
 /// <summary>Composite leaf: one sellable SKU with its own price, stock and weight.</summary>
 public sealed class SimpleProduct : CatalogItem
 {

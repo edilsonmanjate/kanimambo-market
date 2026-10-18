@@ -7,8 +7,6 @@ using Kanimambo.SharedKernel.Results;
 
 namespace Kanimambo.Catalog.Infrastructure.Imports;
 
-internal sealed record ExcelRow(IReadOnlyDictionary<string, XLCellValue> Cells);
-
 /// <summary>
 /// Excel workbook (.xlsx) filled in by the seller. Format specifics: first worksheet, header in row 1,
 /// numbers arrive as typed numeric cells — text typed into a numeric column is rejected with a clear reason.

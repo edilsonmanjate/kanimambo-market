@@ -3,13 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Kanimambo.Promotions.IntegrationTests;
 using Kanimambo.SharedKernel.Identity;
-using Kanimambo.Testing;
 
 [assembly: AssemblyFixture(typeof(PromotionsApiFactory))]
 
 namespace Kanimambo.Promotions.IntegrationTests;
-
-public sealed class PromotionsApiFactory : KanimamboWebApplicationFactory;
 
 public sealed class PromotionsApiTests(PromotionsApiFactory factory)
 {

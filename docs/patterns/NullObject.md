@@ -61,9 +61,9 @@ classDiagram
 
 ## Where in the code
 
-- [Customers.cs](../../src/Modules/Cart/Kanimambo.Cart.Domain/Customers.cs) (`GuestCustomer`)
-- [PromotionContracts.cs](../../src/Modules/Promotions/Kanimambo.Promotions.Contracts/PromotionContracts.cs) (`NoPromotion`)
-- [ExchangeRates.cs](../../src/Kanimambo.SharedKernel/Domain/ExchangeRates.cs) (`NoExchangeRate`)
+- [GuestCustomer.cs](../../src/Modules/Cart/Kanimambo.Cart.Domain/GuestCustomer.cs) (`GuestCustomer`)
+- [NoPromotion.cs](../../src/Modules/Promotions/Kanimambo.Promotions.Contracts/NoPromotion.cs) (`NoPromotion`)
+- [NoExchangeRate.cs](../../src/Kanimambo.SharedKernel/Domain/NoExchangeRate.cs) (`NoExchangeRate`)
 - The flow without branches:
   [CartPricing.cs](../../src/Modules/Cart/Kanimambo.Cart.Application/Pricing/CartPricing.cs)
 - Translation at the edges:

@@ -1,17 +1,8 @@
 using System.Collections.Frozen;
 using Kanimambo.SharedKernel.Features;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Kanimambo.SharedKernel.Infrastructure.Features;
-
-public sealed class FeatureFlagOptions
-{
-    public const string SectionName = "Features";
-
-    public Dictionary<string, bool> Flags { get; } = new(StringComparer.OrdinalIgnoreCase);
-}
 
 /// <summary>
 /// Singleton, thread-safe: readers see an immutable snapshot; a configuration reload builds a new snapshot and
@@ -35,15 +26,4 @@ public sealed class ConfiguredFeatureFlags : IFeatureFlags, IDisposable
 
     private static FrozenDictionary<string, bool> Snapshot(FeatureFlagOptions options) =>
         options.Flags.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
-}
-
-public static class FeatureFlagExtensions
-{
-    /// <summary>One instance for the application lifetime: the DI container, not a static field, owns it.</summary>
-    public static IServiceCollection AddFeatureFlags(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddOptions<FeatureFlagOptions>().Bind(configuration.GetSection(FeatureFlagOptions.SectionName));
-        services.AddSingleton<IFeatureFlags, ConfiguredFeatureFlags>();
-        return services;
-    }
 }

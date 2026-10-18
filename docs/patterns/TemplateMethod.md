@@ -80,7 +80,7 @@ Two kinds of failure are reported differently:
 - Template:
   [CatalogImporter.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Imports/CatalogImporter.cs);
   model:
-  [ImportModel.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Imports/ImportModel.cs)
+  [ImportReport.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Imports/ImportReport.cs), [ProductDraft.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Imports/ProductDraft.cs), [RejectedRow.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Imports/RejectedRow.cs)
 - Formats:
   [Imports/](../../src/Modules/Catalog/Kanimambo.Catalog.Infrastructure/Imports)
   (`CsvCatalogImporter`, `ExcelCatalogImporter`, `XmlCatalogImporter`, `WholesalerApiImporter`)

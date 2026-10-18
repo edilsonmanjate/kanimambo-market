@@ -91,13 +91,13 @@ Delivery follows the same loop:
   (`OutboxMessage`, `OutboxInterceptor`, `OutboxProcessor`), enabled with
   `AddModuleDbContext<T>(…, publishesEvents: true)`
 - Ordering's events:
-  [OrderingIntegrationEvents.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Contracts/OrderingIntegrationEvents.cs),
+  [OrderPlacedIntegrationEvent.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Contracts/OrderPlacedIntegrationEvent.cs), [OrderPaidIntegrationEvent.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Contracts/OrderPaidIntegrationEvent.cs), [OrderStatusChangedIntegrationEvent.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Contracts/OrderStatusChangedIntegrationEvent.cs),
   mapper:
   [OrderingIntegrationEventMapper.cs](../../src/Modules/Ordering/Kanimambo.Ordering.Infrastructure/OrderingIntegrationEventMapper.cs)
 - Subscribers:
   [ReserveStock.cs](../../src/Modules/Catalog/Kanimambo.Catalog.Application/Stock/ReserveStock.cs) (bundles
   reserve their leaf products),
-  [CartCheckout.cs](../../src/Modules/Cart/Kanimambo.Cart.Application/Checkout/CartCheckout.cs)
+  [CloseCartWhenOrderIsPlaced.cs](../../src/Modules/Cart/Kanimambo.Cart.Application/Checkout/CloseCartWhenOrderIsPlaced.cs)
 
 ## Tests
 
