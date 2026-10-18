@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Catalog\Kanimambo.Catalog.Domain\Kanimambo.Catalog.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Invoicing\Kanimambo.Invoicing.Infrastructure\Kanimambo.Invoicing.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
