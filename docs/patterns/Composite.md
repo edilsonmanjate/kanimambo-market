@@ -63,8 +63,10 @@ Design points:
 - **Invariants on composition.** All components must belong to the same seller and be priced in the
   same currency, a bundle can't contain itself at any depth (`Contains` is recursive), and adding a
   component twice merges the quantities.
-- **IVA uses configured rates.** `TaxableAmounts` yields the net amount per leaf and tax category, and
-  `IvaBreakdown` groups them and applies the configured rate of each category.
+- **IVA uses configured rates.** `TaxableAmounts` yields the amount per leaf and tax category.
+  Prices include IVA, so `IvaBreakdown` groups those amounts and *extracts* each category's IVA
+  (net = gross / (1 + rate)). The rates come from the Invoicing module's cached tax table
+  (see [Singleton](Singleton.md)).
 - **Same rules for search.** The `catalog_entries` view repeats the same rules in SQL with a recursive
   CTE, so search filters see the same price, weight and stock (see [Specification](Specification.md)).
 - **Loading the tree.** `CatalogItemRepository.GetTreeAsync` loads the tree level by level, and EF's

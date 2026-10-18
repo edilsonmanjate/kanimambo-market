@@ -46,8 +46,8 @@ public sealed class CatalogApiTests(CatalogApiFactory factory)
         var lines = iva.GetProperty("lines").EnumerateArray()
             .Select(l => (l.GetProperty("category").GetString(), l.GetProperty("net").GetProperty("amount").GetDecimal(), l.GetProperty("iva").GetProperty("amount").GetDecimal()))
             .ToList();
-        lines.ShouldBe([("exempt", 2_470m, 0m), ("standard", 2_310m, 369.60m)]);
-        iva.GetProperty("gross").GetProperty("amount").GetDecimal().ShouldBe(5_149.60m);
+        lines.ShouldBe([("exempt", 2_470m, 0m), ("standard", 1_991.38m, 318.62m)]);   // 2 310 IVA included, 16 %
+        iva.GetProperty("gross").GetProperty("amount").GetDecimal().ShouldBe(4_780m);       // = the price: IVA is included
 
         var components = details.GetProperty("components").EnumerateArray().ToList();
         components.Count.ShouldBe(3);
