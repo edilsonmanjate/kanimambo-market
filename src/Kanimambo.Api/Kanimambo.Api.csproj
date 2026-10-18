@@ -32,6 +32,8 @@
     <ProjectReference Include="..\Modules\Shipping\Kanimambo.Shipping.Infrastructure\Kanimambo.Shipping.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules\Invoicing\Kanimambo.Invoicing.Api\Kanimambo.Invoicing.Api.csproj" />
     <ProjectReference Include="..\Modules\Invoicing\Kanimambo.Invoicing.Infrastructure\Kanimambo.Invoicing.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Notifications\Kanimambo.Notifications.Api\Kanimambo.Notifications.Api.csproj" />
+    <ProjectReference Include="..\Modules\Notifications\Kanimambo.Notifications.Infrastructure\Kanimambo.Notifications.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

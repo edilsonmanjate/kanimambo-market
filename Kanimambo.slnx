@@ -29,6 +29,12 @@
     <Project Path="src/Modules/Invoicing/Kanimambo.Invoicing.Domain/Kanimambo.Invoicing.Domain.csproj" />
     <Project Path="src/Modules/Invoicing/Kanimambo.Invoicing.Infrastructure/Kanimambo.Invoicing.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Notifications/">
+    <Project Path="src/Modules/Notifications/Kanimambo.Notifications.Api/Kanimambo.Notifications.Api.csproj" />
+    <Project Path="src/Modules/Notifications/Kanimambo.Notifications.Application/Kanimambo.Notifications.Application.csproj" />
+    <Project Path="src/Modules/Notifications/Kanimambo.Notifications.Domain/Kanimambo.Notifications.Domain.csproj" />
+    <Project Path="src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Kanimambo.Notifications.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Ordering/">
     <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Api/Kanimambo.Ordering.Api.csproj" />
     <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Application/Kanimambo.Ordering.Application.csproj" />
@@ -60,6 +66,7 @@
   <Folder Name="/src/Simulators/">
     <Project Path="src/Simulators/Kanimambo.Simulators.Courier/Kanimambo.Simulators.Courier.csproj" />
     <Project Path="src/Simulators/Kanimambo.Simulators.ExchangeRates/Kanimambo.Simulators.ExchangeRates.csproj" />
+    <Project Path="src/Simulators/Kanimambo.Simulators.Messaging/Kanimambo.Simulators.Messaging.csproj" />
     <Project Path="src/Simulators/Kanimambo.Simulators.MobileMoney/Kanimambo.Simulators.MobileMoney.csproj" />
     <Project Path="src/Simulators/Kanimambo.Simulators.Wholesaler/Kanimambo.Simulators.Wholesaler.csproj" />
   </Folder>
@@ -73,6 +80,8 @@
     <Project Path="tests/Kanimambo.Catalog.UnitTests/Kanimambo.Catalog.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Invoicing.IntegrationTests/Kanimambo.Invoicing.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.Invoicing.UnitTests/Kanimambo.Invoicing.UnitTests.csproj" />
+    <Project Path="tests/Kanimambo.Notifications.IntegrationTests/Kanimambo.Notifications.IntegrationTests.csproj" />
+    <Project Path="tests/Kanimambo.Notifications.UnitTests/Kanimambo.Notifications.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Ordering.IntegrationTests/Kanimambo.Ordering.IntegrationTests.csproj" />
     <Project Path="tests/Kanimambo.Ordering.UnitTests/Kanimambo.Ordering.UnitTests.csproj" />
     <Project Path="tests/Kanimambo.Payments.IntegrationTests/Kanimambo.Payments.IntegrationTests.csproj" />

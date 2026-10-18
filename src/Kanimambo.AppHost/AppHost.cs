@@ -14,6 +14,7 @@ var exchangeRates = builder.AddProject<Projects.Kanimambo_Simulators_ExchangeRat
 var wholesaler = builder.AddProject<Projects.Kanimambo_Simulators_Wholesaler>("wholesaler");
 var mobileMoney = builder.AddProject<Projects.Kanimambo_Simulators_MobileMoney>("mobile-money");
 var courier = builder.AddProject<Projects.Kanimambo_Simulators_Courier>("courier");
+var messaging = builder.AddProject<Projects.Kanimambo_Simulators_Messaging>("messaging");
 
 var api = builder.AddProject<Projects.Kanimambo_Api>("api");
 api
@@ -25,6 +26,7 @@ api
     .WithReference(wholesaler)
     .WithReference(mobileMoney)
     .WithReference(courier)
+    .WithReference(messaging)
     // Operators call the API back (PIN confirmed / failed) and couriers post tracking webhooks, on its own endpoint.
     .WithEnvironment("Payments__CallbackBaseAddress", api.GetEndpoint("http"))
     .WithEnvironment("Shipping__WebhookBaseAddress", api.GetEndpoint("http"))

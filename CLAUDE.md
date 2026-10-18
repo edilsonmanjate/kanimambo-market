@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 6 (Invoicing) complete; awaiting approval for Phase 7 (Notifications).
+**Current phase:** Phase 7 (Notifications) complete, so all 26 patterns are implemented; awaiting approval for Phase 8 (Polish).
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -284,3 +284,12 @@ Decisions taken (see `docs/adr/`):
     - The IVA summary is a visitor too.
   - **Object pools** live in `InvoicingPools`: `PdfWriter : IResettable`, plus a StringBuilder pool. The benchmark results are in `ObjectPool.md`.
   - **Demo profiles.** Catalog demo sellers get fiscal profiles from `InvoicingSeeder` (`Invoicing:SeedDemoData` in Development). Tests register their own profiles with random NUITs.
+- Notifications (ADR 0012):
+  - **Bridge.** `CustomerNotification` is the abstraction, with `OrderConfirmation`, `PaymentReminder`, `DeliveryUpdate` and `InvoiceAvailable`. `INotificationChannel` is the implementor, with Sms, WhatsApp and Email. `MessageRequest.For(channel, settings)` assembles the pair at send time.
+  - **Subscribers.** They react to `OrderPaid`, `OrderStatusChanged` (→ PaymentFailed), `ParcelStatusChanged` (PickedUp, ReadyForCollection, Delivered, Failed) and `FiscalDocumentIssued`. Each becomes an idempotent `Notify` command keyed by the event id.
+  - **Channel choice.** `ContactPreferences` (key = phone, owner = account) gives the channel order; the default is `Notifications:DefaultChannels` = Sms. Invoices are Email/WhatsApp only. The first channel that delivers wins, and every attempt is logged in `SentNotifications`. Only transient failures make the command fail, so the outbox retries.
+  - **No generic HTTP resilience on channel clients.** They use `RemoveAllResilienceHandlers()` and fall back to the next channel at once, which avoids double SMS.
+  - **SMS text.** `Gsm7Text` converts to GSM-7 by code point (é and Ç kept; ã, ç and á replaced) and fits 160 septets.
+  - **`Kanimambo.Simulators.Messaging`.** It enforces GSM-7 and 160 characters. Phones ending in 0201 meet an SMS outage; phones ending in 0202 are not on WhatsApp. `GET /inbox?to=` shows what a recipient received. The shared test factory routes it as `messaging.test`.
+  - **Testing the log.** Providers record a message before `SentNotifications` commits, so tests must wait for the log, not just the inbox.
+  - **Outbox test lists.** `OrderPaid` now has 4 subscribers (Stock, Invoicing, Notifications, and the test's flaky one); the Ordering outbox tests list them.

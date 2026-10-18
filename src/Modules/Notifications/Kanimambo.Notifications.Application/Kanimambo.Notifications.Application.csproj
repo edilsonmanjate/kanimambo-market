@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanimambo.Notifications.Domain\Kanimambo.Notifications.Domain.csproj" />
+    <!-- Reacts to the other modules' integration events through their public contracts only. -->
+    <ProjectReference Include="..\..\Ordering\Kanimambo.Ordering.Contracts\Kanimambo.Ordering.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shipping\Kanimambo.Shipping.Contracts\Kanimambo.Shipping.Contracts.csproj" />
+    <ProjectReference Include="..\..\Invoicing\Kanimambo.Invoicing.Contracts\Kanimambo.Invoicing.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kanimambo.Notifications.UnitTests" />
+  </ItemGroup>
+
+</Project>
