@@ -6,7 +6,7 @@ When an order is paid, several things must happen in different modules:
 
 - reserve the stock (Catalog);
 - issue the invoices (Invoicing): one per seller plus the delivery invoice, and credit notes on refund;
-- send an SMS to the customer and notify the seller (Notifications, Phase 7).
+- tell the customer, by SMS or their preferred channel (Notifications; see [Bridge](Bridge.md)).
 
 When it is placed, the cart must be closed (Cart).
 

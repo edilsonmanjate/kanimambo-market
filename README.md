@@ -13,7 +13,7 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**25 of 26 patterns implemented** (Bridge follows in Phase 7).
+**All 26 patterns implemented.** Phase 8 (polish) remains.
 
 - **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
   **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
@@ -57,6 +57,11 @@ and customers on unstable mobile networks.
     [ADR 0010](docs/adr/0010-singletons-through-di.md));
   - prices include IVA; sellers issue their own invoices and issuing never blocks on missing fiscal data
     ([ADR 0011](docs/adr/0011-invoicing.md)).
+- **Phase 7 – Notifications:**
+  - message types (confirmation, payment reminder, delivery update, invoice available) × channels (SMS, WhatsApp, e-mail)
+    as two independent hierarchies, combined per customer at send time (**Bridge**);
+  - SMS in GSM-7 within 160 characters, fallback to the next preferred channel instead of blind retries
+    ([ADR 0012](docs/adr/0012-notifications.md)).
 
 ## Design patterns index
 
@@ -72,7 +77,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Iterator | Streaming a slow, paginated wholesaler catalog as `IAsyncEnumerable` | Catalog | 1 | ✅ | [Iterator](docs/patterns/Iterator.md) |
 | Mediator | In-process dispatch of commands/queries/notifications with ordered pipeline behaviors | SharedKernel | 0 | ✅ | [Mediator](docs/patterns/Mediator.md) |
 | Memento | Cart snapshots for customers who lose connectivity: restore snapshot N, undo | Cart | 2 | ✅ | [Memento](docs/patterns/Memento.md) |
-| Observer | `OrderPaid` → stock reservation and invoices (SMS in Phase 7); payments and deliveries report back the same way, through transactional outboxes | Transversal | 3–6 | ✅ | [Observer](docs/patterns/Observer.md) |
+| Observer | `OrderPaid` → stock reservation, invoices and the customer's SMS; payments and deliveries report back the same way, through transactional outboxes | Transversal | 3–7 | ✅ | [Observer](docs/patterns/Observer.md) |
 | State | Order lifecycle (prepaid and cash on delivery) and asynchronous mobile-money payments (PIN, timeout, late confirmation) | Ordering, Payments | 3–4 | ✅ | [State](docs/patterns/State.md) |
 | Strategy | Shipping cost: same-day by zone and vehicle, courier by destination and weight, free pickup points | Shipping | 5 | ✅ | [Strategy](docs/patterns/Strategy.md) |
 | Template Method | Seller catalog imports (CSV, Excel, XML, wholesaler API) with fixed steps and per-format hooks | Catalog | 1 | ✅ | [Template Method](docs/patterns/TemplateMethod.md) |
@@ -95,7 +100,7 @@ Legend: ✅ implemented · 🟡 partially implemented · ⏳ planned
 | Pattern | Business problem | Module | Phase | Status | Docs |
 |---|---|---|---|---|---|
 | Adapter | M-Pesa / e-Mola / mKesh and two couriers, each behind one gateway with unified errors | Payments, Shipping | 4–5 | ✅ | [Adapter](docs/patterns/Adapter.md) |
-| Bridge | Message types × channels (SMS ≤160 chars, WhatsApp, e-mail) | Notifications | 7 | ⏳ | — |
+| Bridge | Message types × channels (SMS in GSM-7 ≤160 chars, WhatsApp, e-mail): 7 classes instead of 12, channel chosen per customer | Notifications | 7 | ✅ | [Bridge](docs/patterns/Bridge.md) |
 | Composite | Bundles ("cabaz do mês") with recursive price, weight, stock and per-item IVA | Catalog | 1 | ✅ | [Composite](docs/patterns/Composite.md) |
 | Decorator | Logging, metrics, caching of final statuses and business-aware retry around mobile-money gateways | Payments | 4 | ✅ | [Decorator](docs/patterns/Decorator.md) |
 | Facade | `CheckoutService` orchestrating cart, prices, rates, promotions, shipping, acceptance, order, payment, idempotency | Ordering | 3 | ✅ | [Facade](docs/patterns/Facade.md) |
@@ -115,12 +120,13 @@ flowchart LR
     api --> mediator{{IMediator<br/>Logging → Validation → UnitOfWork → Idempotency}}
     mediator --> catalog[Catalog] & cart[Cart] & promotions[Promotions] & ordering[Ordering]
     mediator --> payments[Payments] & shipping[Shipping] & invoicing[Invoicing] & notifications[Notifications]
-    catalog & ordering & payments & invoicing --> pg[(PostgreSQL<br/>one schema per module)]
+    catalog & ordering & payments & shipping & invoicing & notifications --> pg[(PostgreSQL<br/>one schema per module)]
     api --> redis[(Redis)]
     catalog -.-> fx[[Exchange-rate simulator]]
     catalog -.-> ws[[Wholesaler simulator]]
     payments -.-> mm[[Mobile-money simulator]]
     shipping -.-> courier[[Courier simulator]]
+    notifications -.-> msg[[SMS / WhatsApp / e-mail simulator]]
 ```
 
 ```
@@ -138,17 +144,18 @@ src/
   Modules/Payments/                     {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Shipping/                     {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Invoicing/                    {Api, Application, Contracts, Domain, Infrastructure}
-  Simulators/                           ExchangeRates, Wholesaler, MobileMoney, Courier
+  Modules/Notifications/                {Api, Application, Domain, Infrastructure}
+  Simulators/                           ExchangeRates, Wholesaler, MobileMoney, Courier, Messaging
 tests/
   Kanimambo.SharedKernel.UnitTests/
   Kanimambo.Catalog.UnitTests/  Kanimambo.Promotions.UnitTests/  Kanimambo.Cart.UnitTests/  Kanimambo.Ordering.UnitTests/
-  Kanimambo.Payments.UnitTests/  Kanimambo.Shipping.UnitTests/  Kanimambo.Invoicing.UnitTests/
+  Kanimambo.Payments.UnitTests/  Kanimambo.Shipping.UnitTests/  Kanimambo.Invoicing.UnitTests/  Kanimambo.Notifications.UnitTests/
   Kanimambo.Api.IntegrationTests/       WebApplicationFactory + Testcontainers (PostgreSQL, Redis)
   Kanimambo.Catalog.IntegrationTests/   real API + in-process simulators
   Kanimambo.Promotions.IntegrationTests/  Kanimambo.Cart.IntegrationTests/  Kanimambo.Ordering.IntegrationTests/
   Kanimambo.Payments.IntegrationTests/  real API + mobile-money simulator with compressed delays
   Kanimambo.Shipping.IntegrationTests/  real API + courier simulator with compressed delays
-  Kanimambo.Invoicing.IntegrationTests/
+  Kanimambo.Invoicing.IntegrationTests/  Kanimambo.Notifications.IntegrationTests/
   Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
   Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight, Object Pool)
   Kanimambo.Testing/                    shared test host and JWT helpers
@@ -334,6 +341,23 @@ curl -X PUT "$API/api/invoicing/taxpayers/<sellerId>" -H "Authorization: Bearer 
 curl "$API/api/invoicing/tax-rates?on=2022-06-01"   # standard 17 %
 ```
 
+### A short tour of Notifications
+
+Every order event reaches the customer on their preferred channel. The default is SMS, which reaches
+every phone. The messaging simulator plays the SMS gateway, WhatsApp and e-mail. It rejects anything
+that is not one GSM-7 SMS, and it shows what each phone received. Phones ending in `0201` meet an
+SMS outage; phones ending in `0202` are not on WhatsApp.
+
+```bash
+# Bridge: choose channels in order (the first that delivers wins); e-mail also receives invoices
+curl -X PUT "$API/api/notifications/preferences/258841234567" -H "Authorization: Bearer $CUSTOMER_TOKEN" \
+     -H "Content-Type: application/json" -d '{"email":"ana@example.co.mz","channels":["WhatsApp","Sms","Email"]}'
+
+# What a phone received (simulator) and what was sent or failed (back-office support view)
+curl "http://localhost:5095/inbox?to=258841234567"
+curl "$API/api/notifications/sent?recipient=258841234567" -H "Authorization: Bearer $TOKEN"
+```
+
 Benchmarks:
 
 ```bash
@@ -360,5 +384,5 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 | 4 ✅ | Payments: Factory Method, Adapter, payment State, mobile-money simulator, resilience Decorator |
 | 5 ✅ | Shipping: Strategy, courier Adapter, simulator |
 | 6 ✅ | Invoicing: Builder, Abstract Factory, Visitor, Object Pool + benchmarks, Singleton |
-| 7 | Notifications: Bridge |
+| 7 ✅ | Notifications: Bridge |
 | 8 | Polish: C4 diagrams, end-to-end `.http` flow, badges, demo |
