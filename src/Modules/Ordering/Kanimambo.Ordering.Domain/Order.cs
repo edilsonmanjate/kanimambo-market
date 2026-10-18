@@ -8,7 +8,7 @@ public sealed record OrderPlaced(OrderId OrderId, long Number, string CheckoutSo
     : DomainEvent(OccurredAt);
 
 public sealed record OrderPaid(OrderId OrderId, long Number, string PaymentReference, OrderCustomer Customer, PaymentMethod PaymentMethod, Money Total,
-    IReadOnlyList<OrderLine> Lines, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
+    IReadOnlyList<OrderLine> Lines, OrderTotals Totals, string DeliveryMethod, DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);
 
 /// <summary>The order waits for a prepaid payment; <paramref name="Attempt"/> starts at 1 and grows with each retry.</summary>
 public sealed record OrderPaymentRequested(OrderId OrderId, long Number, int Attempt, PaymentMethod PaymentMethod, string CustomerPhone, Money Amount, DateTimeOffset OccurredAt)
@@ -223,5 +223,6 @@ public sealed class Order : AggregateRoot<OrderId>
     }
 
     private void RaisePaid(DateTimeOffset now) =>
-        Raise(new OrderPaid(Id, Number, PaymentReference!, Customer, PaymentMethod, Totals.Total, [.. _lines.Select(l => l.DeepClone())], now));
+        Raise(new OrderPaid(Id, Number, PaymentReference!, Customer, PaymentMethod, Totals.Total, [.. _lines.Select(l => l.DeepClone())], Totals,
+            Delivery.Method, now));
 }

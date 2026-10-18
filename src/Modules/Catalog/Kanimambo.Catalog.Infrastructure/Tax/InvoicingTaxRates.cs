@@ -1,29 +1,21 @@
 using Kanimambo.Catalog.Application.Abstractions;
 using Kanimambo.Catalog.Domain.Products;
 using Kanimambo.SharedKernel.Results;
-using Microsoft.Extensions.Options;
+using Kanimambo.SharedKernel.Time;
+using RateTable = Kanimambo.Invoicing.Contracts.ITaxRateTable;
 
 namespace Kanimambo.Catalog.Infrastructure.Tax;
 
-public sealed class TaxRatesOptions
-{
-    public const string SectionName = "Catalog:TaxRates";
-
-    /// <summary>Rate per tax category code, as a fraction (0.16 = 16 %).</summary>
-    public Dictionary<string, decimal> Rates { get; } = new(StringComparer.OrdinalIgnoreCase);
-}
-
 /// <summary>
-/// Reads rates from configuration because they change by law. Phase 6 replaces this with the Invoicing
-/// module's cached tax table (Singleton), which also knows the ISPC regime.
+/// The catalog's IVA rates, read from the Invoicing module's rate table (one cached instance for the whole
+/// application, with the legal history of every rate) at today's date in Maputo.
 /// </summary>
-internal sealed class ConfiguredTaxRateTable(IOptions<TaxRatesOptions> options) : ITaxRateTable
+internal sealed class InvoicingTaxRates(RateTable rates, TimeProvider timeProvider) : ITaxRateTable
 {
     public Result<decimal> RateFor(TaxCategory category)
     {
         ArgumentNullException.ThrowIfNull(category);
-        return options.Value.Rates.TryGetValue(category.Code, out var rate)
-            ? rate
-            : Error.BusinessRule("catalog.unknown_tax_category", $"No tax rate configured for category '{category.Code}'.");
+        var rate = rates.RateFor(category.Code, MozambiqueTime.Today(timeProvider));
+        return rate.IsSuccess ? rate.Value.Rate : rate.Error;
     }
 }

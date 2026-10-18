@@ -9,6 +9,9 @@ using Kanimambo.Cart.Infrastructure;
 using Kanimambo.Catalog.Api.Controllers;
 using Kanimambo.Catalog.Application;
 using Kanimambo.Catalog.Infrastructure;
+using Kanimambo.Invoicing.Api.Controllers;
+using Kanimambo.Invoicing.Application;
+using Kanimambo.Invoicing.Infrastructure;
 using Kanimambo.Ordering.Api.Controllers;
 using Kanimambo.Ordering.Application;
 using Kanimambo.Ordering.Infrastructure;
@@ -18,6 +21,7 @@ using Kanimambo.Payments.Infrastructure;
 using Kanimambo.Promotions.Api.Controllers;
 using Kanimambo.Promotions.Application;
 using Kanimambo.Promotions.Infrastructure;
+using Kanimambo.SharedKernel.Infrastructure.Features;
 using Kanimambo.SharedKernel.Messaging;
 using Kanimambo.SharedKernel.Messaging.Behaviors;
 using Kanimambo.Shipping.Api.Controllers;
@@ -35,6 +39,7 @@ builder.Services.AddKanimamboProblemDetails();
 builder.Services.AddKanimamboSecurity();
 builder.Services.AddOpenApi();
 builder.Services.AddIdempotency(builder.Configuration);
+builder.Services.AddFeatureFlags(builder.Configuration);
 
 // Modules: each contributes its controllers (application part), handlers (Mediator) and infrastructure.
 builder.AddCatalogModule();
@@ -43,13 +48,15 @@ builder.AddCartModule();
 builder.AddOrderingModule();
 builder.AddPaymentsModule();
 builder.AddShippingModule();
+builder.AddInvoicingModule();
 builder.Services.AddKanimamboControllers()
     .AddApplicationPart(typeof(CatalogController).Assembly)
     .AddApplicationPart(typeof(PromotionsController).Assembly)
     .AddApplicationPart(typeof(CartsController).Assembly)
     .AddApplicationPart(typeof(CheckoutController).Assembly)
     .AddApplicationPart(typeof(PaymentsController).Assembly)
-    .AddApplicationPart(typeof(ShippingController).Assembly);
+    .AddApplicationPart(typeof(ShippingController).Assembly)
+    .AddApplicationPart(typeof(InvoicingController).Assembly);
 
 // Behaviors run in registration order (first = outermost).
 builder.Services.AddMediator(mediator => mediator
@@ -59,6 +66,7 @@ builder.Services.AddMediator(mediator => mediator
     .AddModule(OrderingModule.Name, typeof(OrderingModule).Assembly)
     .AddModule(PaymentsModule.Name, typeof(PaymentsModule).Assembly)
     .AddModule(ShippingModule.Name, typeof(ShippingModule).Assembly)
+    .AddModule(InvoicingModule.Name, typeof(InvoicingModule).Assembly)
     .AddBehavior(typeof(LoggingBehavior<,>))
     .AddBehavior(typeof(ValidationBehavior<,>))
     .AddBehavior(typeof(UnitOfWorkBehavior<,>))
