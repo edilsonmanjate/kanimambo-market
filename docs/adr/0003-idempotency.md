@@ -50,5 +50,6 @@ The two sources of duplicates are handled at different layers.
   different payload.
 - Responses are buffered in memory to be stored, which is fine for JSON write endpoints. Streaming
   endpoints must not be write endpoints.
-- Once authentication is added (later phases), the caller's identity will join the record scope so
-  that two customers can't collide on the same key.
+- The caller's identity is part of the record scope (method, path and signed-in user), so two
+  customers who send the same key never receive each other's stored response. Anonymous callers
+  (guest carts) share one scope; their keys are random GUIDs generated on the device.

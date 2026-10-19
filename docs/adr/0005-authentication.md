@@ -28,4 +28,6 @@ project must run locally without any external identity provider or credentials.
 - No custom authentication code, and nothing secret is committed.
 - Anonymous requests to protected endpoints get `401`, and authenticated requests without the role get
   `403`, both as ProblemDetails (status code pages).
-- Customer and seller identities (Ordering, Phase 3) will reuse the same scheme with other roles.
+- Customers use the same scheme: any signed-in user is a customer (their name owns orders, carts and
+  notification preferences), and `b2b` marks business buyers. The caller's name also scopes
+  idempotency keys (ADR 0003).
