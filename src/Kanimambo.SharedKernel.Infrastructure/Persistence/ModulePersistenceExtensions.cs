@@ -1,5 +1,6 @@
 using Kanimambo.SharedKernel.Infrastructure.Outbox;
 using Kanimambo.SharedKernel.Messaging;
+using Kanimambo.SharedKernel.Operations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
@@ -67,6 +68,10 @@ public static class ModulePersistenceExtensions
                 sp.GetRequiredKeyedService<IIntegrationEventMapper>(typeof(TContext)), sp.GetRequiredService<TimeProvider>()));
             builder.Services.AddSingleton<OutboxProcessor<TContext>>();
             builder.Services.AddHostedService(sp => sp.GetRequiredService<OutboxProcessor<TContext>>());
+
+            // Operations view (pending, dead letters, replay) of this module's outbox.
+            builder.Services.AddSingleton<IOutboxAdministration>(sp => new OutboxAdministration<TContext>(
+                sp.GetRequiredService<IServiceScopeFactory>(), moduleName, sp.GetRequiredService<TimeProvider>()));
         }
 
         return builder;

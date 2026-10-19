@@ -31,7 +31,11 @@ infrastructure the project doesn't otherwise need yet.
 - No event is lost or published for a rolled-back change. Delivery is at-least-once and eventually
   consistent.
 - One failing subscriber never blocks or repeats the others.
-- Dead-lettered messages need an operational view and replay. That is planned with the Phase 8 polish;
-  until then, reset `DeadLettered`/`NextAttemptAt` in SQL.
+- **Operating dead letters.** Every publishing module exposes its outbox through `IOutboxAdministration`,
+  and the Operations module serves it to the back-office:
+  - `GET /api/operations/outbox` shows pending and dead-lettered messages per module;
+  - `GET /api/operations/outbox/dead-letters` shows what failed and the last error;
+  - `POST /api/operations/outbox/{module}/dead-letters/{id}/replay` puts a message back in the queue once
+    the cause is fixed. Subscribers in `DeliveredTo` are not called again.
 - Moving to a broker later means one more subscriber (the "forwarder") that publishes outbox messages
   to it; the producers don't change.
