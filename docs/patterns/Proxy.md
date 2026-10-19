@@ -57,9 +57,9 @@ sequenceDiagram
 ```
 
 **Proxy or Decorator?** The structure is the same. The intent differs: this class controls *access* to
-one expensive resource (whether, when and how often it is called). The resilience
-Decorators of Phase 4 add behaviour around any client without changing when it is
-called.
+one expensive resource (whether, when and how often it is called). The payment gateway
+[Decorators](Decorator.md) add behaviour (logging, metrics, retry) around a client without changing
+whether it is called.
 
 ## Where in the code
 

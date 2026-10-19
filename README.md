@@ -1,5 +1,11 @@
 # Kanimambo Market
 
+[![ci](https://github.com/edilsonmanjate/kanimambo-market/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/edilsonmanjate/kanimambo-market/actions/workflows/ci.yml)
+![line coverage](https://github.com/edilsonmanjate/kanimambo-market/raw/badges/badge_linecoverage.svg)
+![branch coverage](https://github.com/edilsonmanjate/kanimambo-market/raw/badges/badge_branchcoverage.svg)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
+![design patterns](https://img.shields.io/badge/design%20patterns-26%2F26-2ea44f)
+
 A marketplace backend for Mozambique, built as a **design patterns showcase in .NET 10**.
 Each of the 26 patterns below solves a real business problem of the Mozambican market:
 M-Pesa / e-Mola / mKesh mobile-money payments, IVA and ISPC tax regimes, monthly invoice
@@ -13,7 +19,8 @@ and customers on unstable mobile networks.
 
 ## Status
 
-**All 26 patterns implemented.** Phase 8 (polish) remains.
+**All 26 patterns implemented, all 8 phases done.** To see the whole system work in one command, go to
+[See it work](#see-it-work).
 
 - **Phase 0 – Foundations:** solution layout, Aspire orchestration, SharedKernel (with the in-house
   **Mediator**), the API host with ProblemDetails and `Idempotency-Key` support, architecture tests and CI.
@@ -62,6 +69,14 @@ and customers on unstable mobile networks.
     as two independent hierarchies, combined per customer at send time (**Bridge**);
   - SMS in GSM-7 within 160 characters, fallback to the next preferred channel instead of blind retries
     ([ADR 0012](docs/adr/0012-notifications.md)).
+- **Phase 8 – Polish:**
+  - C4 context and container diagrams, plus the modules and the events between them ([Architecture](#architecture));
+  - the whole journey as an [`.http` walkthrough](http/kanimambo-journey.http) and a one-command
+    [demo](docs/demo.md) that runs it;
+  - an operations view of every module's outbox, with dead-letter replay (Operations module, ADR 0007);
+  - idempotency keys scoped to the signed-in caller (ADR 0003);
+  - every source file holds one type, enforced by an architecture test;
+  - build and coverage badges published by CI.
 
 ## Design patterns index
 
@@ -114,20 +129,88 @@ A **modular monolith** with Clean Architecture inside each module. Modules commu
 public contracts and events, never through each other's `DbContext`
 ([ADR 0001](docs/adr/0001-modular-monolith.md)).
 
+### Level 1: system context (C4)
+
+Who uses Kanimambo Market, and which outside systems it depends on. Every external system has a local
+simulator, so the project runs without any real credential.
+
+```mermaid
+flowchart TB
+    customer(["<b>Customer</b><br/>consumer or business (B2B),<br/>often on a weak mobile network"])
+    staff(["<b>Back-office staff</b><br/>orders, sellers, fiscal data, operations"])
+    seller(["<b>Seller</b><br/>shop, wholesaler, producer"])
+
+    km["<b>Kanimambo Market</b><br/>marketplace backend<br/>(.NET 10 modular monolith)"]
+
+    mm["<b>Mobile-money operators</b><br/>M-Pesa · e-Mola · mKesh"]
+    card["<b>Card network</b><br/>SIMO"]
+    couriers["<b>Couriers</b><br/>same-day riders · inter-provincial cargo"]
+    messaging["<b>SMS / WhatsApp / e-mail</b><br/>providers"]
+    fx["<b>Exchange-rate API</b><br/>USD / ZAR → MZN"]
+    wholesaler["<b>Wholesaler catalog API</b><br/>paginated"]
+    at["<b>Autoridade Tributária</b><br/>e-Declaração portal"]
+
+    customer -- "browses, orders, pays (HTTPS)" --> km
+    staff -- "operates (HTTPS, JWT)" --> km
+    seller -. "catalog imports" .-> km
+    km -- "PIN prompt / callback" --> mm
+    km -- "authorise" --> card
+    km -- "book / tracking webhooks" --> couriers
+    km -- "messages" --> messaging
+    messaging -. "SMS, WhatsApp, e-mail" .-> customer
+    km -- "daily rates" --> fx
+    km -- "streams pages" --> wholesaler
+    km -. "monthly file (CSV / XLSX / XML),<br/>uploaded by staff" .-> at
+```
+
+### Level 2: containers (C4)
+
+```mermaid
+flowchart TB
+    client(["Mobile / web client"])
+    subgraph host["Kanimambo.AppHost (.NET Aspire): local orchestration and dashboard (OpenTelemetry)"]
+        api["<b>Kanimambo.Api</b><br/>ASP.NET Core controllers · JWT · ProblemDetails · Idempotency-Key<br/>9 modules + an outbox processor per publishing module"]
+        pg[("<b>PostgreSQL</b><br/>one schema per module<br/>+ outbox / inbox tables")]
+        redis[("<b>Redis</b><br/>exchange rates, settled payment statuses")]
+        sims["<b>Simulators</b><br/>ExchangeRates · Wholesaler · MobileMoney · Courier · Messaging"]
+    end
+    client -- "HTTPS / JSON" --> api
+    api -- "EF Core (Npgsql)" --> pg
+    api -- "IDistributedCache" --> redis
+    api -- "HTTP (operator, courier, provider formats)" --> sims
+    sims -- "signed callbacks and webhooks" --> api
+```
+
+### Inside the monolith: modules and events
+
+Solid arrows are synchronous calls through a module's `*.Contracts` interfaces. Dotted arrows are
+integration events, delivered by the publishing module's transactional outbox
+([ADR 0007](docs/adr/0007-transactional-outbox.md)).
+
 ```mermaid
 flowchart LR
-    client([Mobile / web clients]) --> api[Kanimambo.Api<br/>controllers · ProblemDetails · Idempotency-Key]
-    api --> mediator{{IMediator<br/>Logging → Validation → UnitOfWork → Idempotency}}
-    mediator --> catalog[Catalog] & cart[Cart] & promotions[Promotions] & ordering[Ordering]
-    mediator --> payments[Payments] & shipping[Shipping] & invoicing[Invoicing] & notifications[Notifications]
-    catalog & ordering & payments & shipping & invoicing & notifications --> pg[(PostgreSQL<br/>one schema per module)]
-    api --> redis[(Redis)]
-    catalog -.-> fx[[Exchange-rate simulator]]
-    catalog -.-> ws[[Wholesaler simulator]]
-    payments -.-> mm[[Mobile-money simulator]]
-    shipping -.-> courier[[Courier simulator]]
-    notifications -.-> msg[[SMS / WhatsApp / e-mail simulator]]
+    cart[Cart] --> catalog[Catalog]
+    cart --> promotions[Promotions]
+    ordering[Ordering] --> cart & catalog & promotions
+    ordering -- "quote" --> shipping[Shipping]
+    invoicing[Invoicing] -- "tax profiles" --> catalog
+    catalog -- "IVA rates" --> invoicing
+
+    ordering -. "OrderPlaced" .-> cart
+    ordering -. "OrderPaymentRequested" .-> payments[Payments]
+    payments -. "PaymentConfirmed / PaymentFailed" .-> ordering
+    ordering -. "OrderPaid" .-> catalog
+    ordering -. "OrderPaid · OrderStatusChanged" .-> invoicing
+    ordering -. "OrderPaid · OrderStatusChanged" .-> notifications[Notifications]
+    ordering -. "OrderDispatched" .-> shipping
+    shipping -. "OrderDelivered" .-> ordering
+    shipping -. "ParcelStatusChanged" .-> notifications
+    invoicing -. "FiscalDocumentIssued" .-> notifications
+    operations[Operations] -. "dead letters, replay" .- ordering & payments & shipping & invoicing
 ```
+
+Every request goes through the in-house Mediator, whose pipeline runs Logging → Validation →
+UnitOfWork → Idempotency ([ADR 0002](docs/adr/0002-in-house-mediator.md)).
 
 ```
 src/
@@ -145,6 +228,7 @@ src/
   Modules/Shipping/                     {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Invoicing/                    {Api, Application, Contracts, Domain, Infrastructure}
   Modules/Notifications/                {Api, Application, Domain, Infrastructure}
+  Modules/Operations/                   {Api, Application, Infrastructure}: outbox health and dead-letter replay
   Simulators/                           ExchangeRates, Wholesaler, MobileMoney, Courier, Messaging
 tests/
   Kanimambo.SharedKernel.UnitTests/
@@ -156,12 +240,15 @@ tests/
   Kanimambo.Payments.IntegrationTests/  real API + mobile-money simulator with compressed delays
   Kanimambo.Shipping.IntegrationTests/  real API + courier simulator with compressed delays
   Kanimambo.Invoicing.IntegrationTests/  Kanimambo.Notifications.IntegrationTests/
-  Kanimambo.ArchitectureTests/          NetArchTest: layer and module isolation rules
+  Kanimambo.ArchitectureTests/          NetArchTest layer and module rules; one type per source file (Roslyn)
   Kanimambo.Benchmarks/                 BenchmarkDotNet (Flyweight, Object Pool)
   Kanimambo.Testing/                    shared test host and JWT helpers
 docs/
   patterns/                   one document per pattern
   adr/                        architecture decision records
+  demo.md                     transcript of the end-to-end demo
+http/kanimambo-journey.http   the whole journey, request by request
+scripts/demo.cs               runs that walkthrough and narrates it (dotnet run scripts/demo.cs)
 ```
 
 ### Cross-cutting behavior
@@ -172,9 +259,12 @@ docs/
 - **Idempotency.** Every write endpoint accepts `Idempotency-Key`. A retry gets back the stored first
   response, marked `Idempotent-Replayed: true`. Reusing a key with a different payload returns 422.
   A retry that arrives while the first request is still running returns 409. 5xx responses are not
-  stored, so the client can retry. Internal re-deliveries (outbox, payment callbacks) are
-  de-duplicated by the Mediator's `IdempotencyBehavior`
-  ([ADR 0003](docs/adr/0003-idempotency.md)).
+  stored, so the client can retry. A key belongs to the endpoint and the signed-in caller, so two
+  customers never see each other's stored response. Internal re-deliveries (outbox, payment callbacks)
+  are de-duplicated by the Mediator's `IdempotencyBehavior` ([ADR 0003](docs/adr/0003-idempotency.md)).
+- **Operations.** Every publishing module's outbox is visible to the back-office
+  (`GET /api/operations/outbox`). A message that failed `Outbox:MaxAttempts` times is dead-lettered, and
+  once the cause is fixed it can be replayed for the subscribers that missed it.
 - **Time.** `TimeProvider` is injected everywhere; nothing reads `DateTime.Now`.
 - **Money.** `Money` is a `decimal` value object, rounded to 2 decimal places with
   `MidpointRounding.AwayFromZero`. Mixing currencies without an explicit conversion throws.
@@ -197,6 +287,26 @@ dotnet tool restore
 dotnet build Kanimambo.slnx
 dotnet test --solution Kanimambo.slnx
 ```
+
+### See it work
+
+With the AppHost running, one command takes an order through the whole system:
+
+```bash
+dotnet run scripts/demo.cs
+```
+
+1. Search the catalog and open a bundle.
+2. Fill a cart, see the M-Pesa promotion and the delivery options.
+3. Check out with M-Pesa. The simulated customer types the PIN, the operator calls back, and the order
+   is paid.
+4. The invoices are issued (one per seller, in each seller's tax regime) and the customer gets an SMS.
+5. The order is dispatched, the simulated couriers deliver it, and the delivery SMS arrives.
+6. Finish with the month's e-Declaração file and the outbox health.
+
+The runner executes [`http/kanimambo-journey.http`](http/kanimambo-journey.http), which you can also
+send request by request from Visual Studio or VS Code (REST Client). Each step names the patterns it
+exercises. [docs/demo.md](docs/demo.md) is the transcript of a real run.
 
 ### A short tour of the Catalog
 
@@ -385,4 +495,4 @@ dotnet reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestRes
 | 5 ✅ | Shipping: Strategy, courier Adapter, simulator |
 | 6 ✅ | Invoicing: Builder, Abstract Factory, Visitor, Object Pool + benchmarks, Singleton |
 | 7 ✅ | Notifications: Bridge |
-| 8 | Polish: C4 diagrams, end-to-end `.http` flow, badges, demo |
+| 8 ✅ | Polish: C4 diagrams, end-to-end `.http` flow, demo, badges, outbox operations |

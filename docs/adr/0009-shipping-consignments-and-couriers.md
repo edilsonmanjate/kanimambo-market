@@ -50,8 +50,9 @@ need contracts and credentials.
   collection (`POST /api/shipping/consignments/{id}/collected`), and only then is the order delivered.
 - **Outcomes.**
   - `OrderDelivered` makes Ordering apply `Deliver`, which is when cash orders are paid.
-  - `DeliveryFailed` and `ParcelStatusChanged` are published for Notifications (Phase 7). A failed
-    delivery leaves the order `OutForDelivery`, for the back-office to resolve.
+  - `ParcelStatusChanged` drives the customer's delivery messages (Notifications, ADR 0012), and
+    `DeliveryFailed` is published for back-office tooling. A failed delivery leaves the order
+    `OutForDelivery`, for the back-office to resolve.
 - **`Kanimambo.Simulators.Courier`** plays two **fictional** couriers in deliberately different
   simulated formats:
   - **Txova Express**, for same-day riders;

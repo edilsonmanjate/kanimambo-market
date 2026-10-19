@@ -53,8 +53,8 @@ any.
 ## Consequences
 
 - **Eventual consistency.** Checkout answers `AwaitingPayment`, and the order becomes `Paid` (or
-  `PaymentFailed`) asynchronously, seconds later. Clients poll the order or, later, get an SMS
-  (Phase 7).
+  `PaymentFailed`) asynchronously, seconds later. Clients poll the order, and the customer gets an SMS
+  either way (a confirmation, or a reminder with the reason; see ADR 0012).
 - **Configuration and secrets.**
   - Real secrets must come from a vault or user secrets. The callback secrets in `appsettings.json`
     are development placeholders matching the simulator.
