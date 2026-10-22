@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Operations: cross-module views for the people who run the system (outbox health, dead letters). No data of its own. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Kanimambo.SharedKernel\Kanimambo.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

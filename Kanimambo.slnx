@@ -35,6 +35,11 @@
     <Project Path="src/Modules/Notifications/Kanimambo.Notifications.Domain/Kanimambo.Notifications.Domain.csproj" />
     <Project Path="src/Modules/Notifications/Kanimambo.Notifications.Infrastructure/Kanimambo.Notifications.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Operations/">
+    <Project Path="src/Modules/Operations/Kanimambo.Operations.Api/Kanimambo.Operations.Api.csproj" />
+    <Project Path="src/Modules/Operations/Kanimambo.Operations.Application/Kanimambo.Operations.Application.csproj" />
+    <Project Path="src/Modules/Operations/Kanimambo.Operations.Infrastructure/Kanimambo.Operations.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Ordering/">
     <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Api/Kanimambo.Ordering.Api.csproj" />
     <Project Path="src/Modules/Ordering/Kanimambo.Ordering.Application/Kanimambo.Ordering.Application.csproj" />

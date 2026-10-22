@@ -49,7 +49,7 @@ jobs:
           dotnet reportgenerator
           -reports:"TestResults/*.cobertura.xml"
           -targetdir:TestResults/report
-          -reporttypes:"MarkdownSummaryGithub;Cobertura;HtmlInline"
+          -reporttypes:"MarkdownSummaryGithub;Cobertura;HtmlInline;Badges"
           -assemblyfilters:"+Kanimambo.*;-*Tests;-Kanimambo.AppHost;-Kanimambo.Testing;-Kanimambo.Simulators.*"
           -classfilters:"-*.Migrations.*;-Microsoft.AspNetCore.OpenApi.Generated*;-System.Runtime.CompilerServices*;-System.Text.RegularExpressions.Generated*"
 
@@ -62,3 +62,33 @@ jobs:
         with:
           name: coverage-report
           path: TestResults/report
+
+  # Coverage badges for the README: on every push to main, the badge SVGs from the report replace the content of
+  # the orphan `badges` branch. Only this job may write to the repository, and only on main.
+  publish-badges:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: report
+
+      - name: Publish coverage badges to the badges branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir badges
+          cp report/badge_linecoverage.svg report/badge_branchcoverage.svg badges/
+          cd badges
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -q -m "Coverage badges for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges

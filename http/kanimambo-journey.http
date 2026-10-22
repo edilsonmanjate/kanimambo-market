@@ -1,0 +1,163 @@
+# Kanimambo Market: the whole journey, one request at a time.
+#
+#   search a product → cart → promotion → shipping options → checkout with M-Pesa (simulated)
+#   → the operator's callback pays the order → invoices → SMS → dispatch → courier → delivered
+#   → the month's e-Declaração file
+#
+# How to run:
+#   1. dotnet run --project src/Kanimambo.AppHost --launch-profile http   (PostgreSQL, Redis, API and every simulator)
+#   2. Back-office token (once; restart the AppHost afterwards so the API knows the signing key):
+#        dotnet user-jwts create --project src/Kanimambo.Api --name ana.backoffice --role backoffice --output token
+#      and paste it into @backofficeToken below.
+#   3. Send the requests in order: Visual Studio (HTTP editor) or VS Code (REST Client).
+#      Each request names its response (# @name) and later ones reuse values from it.
+#
+# Every external system is a local simulator: no credential, no real money, no real SMS.
+
+@api = http://localhost:5080
+@backofficeToken = paste-the-token-here
+# The last four digits pick the simulators' scenarios; anything ≥ 1000 succeeds everywhere.
+@phone = 258841237777
+# Year/month of the monthly fiscal file (step 18): the current month in Maputo.
+@period = 2026/10
+
+
+### 1. Specification: groceries in stock delivered to Maputo, filters translated to SQL
+# @name search
+GET {{api}}/api/catalog/products?q=Leite&inStock=true&deliversTo=Maputo
+
+### 2. Composite: the "Cabaz do Mês" bundle — price, stock derived from its components, IVA per tax category
+# @name cabaz
+GET {{api}}/api/catalog/products/01920000-0000-7000-9000-0000000000c1
+
+### 3. Memento: a guest cart (keep its id on the phone); every change is a snapshot
+# @name cart
+POST {{api}}/api/carts
+Content-Type: application/json
+
+{ "deliveryCity": "Maputo" }
+
+### 4. Add the bundle (sold by an ISPC seller)…
+PUT {{api}}/api/carts/{{cart.response.body.$.id}}/lines/01920000-0000-7000-9000-0000000000c1
+Content-Type: application/json
+
+{ "quantity": 1 }
+
+### 5. …and the milk found in step 1 (priced in ZAR by an IVA-normal importer: converted to MZN — Proxy)
+PUT {{api}}/api/carts/{{cart.response.body.$.id}}/lines/{{search.response.body.$.items[0].id}}
+Content-Type: application/json
+
+{ "quantity": 2 }
+
+### 6. Null Object + Interpreter: the price in MZN with the best promotion for paying by M-Pesa
+GET {{api}}/api/carts/{{cart.response.body.$.id}}/pricing?paymentMethod=MPesa
+
+### 7. Strategy: every way to deliver this cart, cheapest first (the district picks the same-day zone)
+GET {{api}}/api/shipping/options?cartId={{cart.response.body.$.id}}&district=KaMpfumo
+
+### 8. Facade + Chain of Responsibility: one checkout call (Idempotency-Key required: retrying returns the same order)
+# @name checkout
+POST {{api}}/api/checkout
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "cartId": "{{cart.response.body.$.id}}",
+  "paymentMethod": "MPesa",
+  "phone": "{{phone}}",
+  "deliveryMethod": "SameDay",
+  "deliveryDistrict": "KaMpfumo"
+}
+
+### 9. State: wait ~3 s and ask again — the simulated customer typed the PIN, the operator called back (Factory Method,
+#    Adapter, Decorator), Payments told Ordering through the outbox (Observer): AwaitingPayment → Paid
+# demo: wait until $.status == "Paid"
+GET {{api}}/api/orders/{{checkout.response.body.$.orderId}}
+
+### 10. The payment as the operator saw it: lifecycle and native codes (back-office)
+GET {{api}}/api/payments?orderId={{checkout.response.body.$.orderId}}
+Authorization: Bearer {{backofficeToken}}
+
+### 11. Builder + Abstract Factory: one invoice per seller in its own regime (FS… under ISPC, FT… with IVA) plus the
+#     delivery invoice; together they add up to the order total
+# demo: wait until $[2].type == "Invoice"
+# @name documents
+GET {{api}}/api/invoicing/documents?orderId={{checkout.response.body.$.orderId}}
+Authorization: Bearer {{backofficeToken}}
+
+### 12. Visitor + Object Pool: the first document as PDF (feature flag Invoicing.InvoicePdf)
+GET {{api}}/api/invoicing/documents/{{documents.response.body.$[0].id}}/pdf
+Authorization: Bearer {{backofficeToken}}
+
+### 13. Bridge: what the customer was told, and on which channel (SMS by default: GSM-7, one message)
+# demo: wait until $[0].status == "Sent"
+GET {{api}}/api/notifications/sent?recipient={{phone}}
+Authorization: Bearer {{backofficeToken}}
+
+### 14. The sellers prepare the order…
+POST {{api}}/api/orders/{{checkout.response.body.$.orderId}}/transitions/StartPreparing
+Authorization: Bearer {{backofficeToken}}
+Content-Type: application/json
+
+{}
+
+### 15. …and hand it over: Shipping books a courier per seller (Adapter over two simulated couriers)
+POST {{api}}/api/orders/{{checkout.response.body.$.orderId}}/transitions/Dispatch
+Authorization: Bearer {{backofficeToken}}
+Content-Type: application/json
+
+{}
+
+### 16. Parcels and courier tracking (repeat after a few seconds: picked up → delivered)
+# demo: wait until $.status == "Delivered"
+GET {{api}}/api/shipping/consignments?orderId={{checkout.response.body.$.orderId}}
+Authorization: Bearer {{backofficeToken}}
+
+### 17. When the last parcel arrives the order is Delivered, and the customer got "a caminho" / "foi entregue" SMS
+# demo: wait until $.status == "Delivered"
+GET {{api}}/api/orders/{{checkout.response.body.$.orderId}}
+
+### 18. Visitor: an issuer's e-Declaração file for the month, and its IVA summary
+#     (400100005 = Importadora Lebombo, a demo seller under IVA normal)
+GET {{api}}/api/invoicing/e-declaracao/400100005/{{period}}?format=csv
+Authorization: Bearer {{backofficeToken}}
+
+###
+GET {{api}}/api/invoicing/iva-summary/400100005/{{period}}
+Authorization: Bearer {{backofficeToken}}
+
+### 19. Singleton: the one cached IVA rate table, with its legal history (17 % before 2023)
+GET {{api}}/api/invoicing/tax-rates?on=2022-06-01
+
+### 20. Operations: every module's outbox — pending messages and dead letters (replay after a fix)
+GET {{api}}/api/operations/outbox
+Authorization: Bearer {{backofficeToken}}
+
+
+### ── More patterns, outside the main journey ──────────────────────────────────────────────
+
+### Template Method + Iterator: import the wholesaler's paginated catalog into a seller (streamed, page by page)
+POST {{api}}/api/catalog/sellers/01920000-0000-7000-8000-000000000002/imports/wholesaler
+Authorization: Bearer {{backofficeToken}}
+
+### Command: an audited, undoable bulk price change (rand appreciation: +8 % for Importadora Lebombo)
+# @name adjustment
+POST {{api}}/api/catalog/backoffice/sellers/01920000-0000-7000-8000-000000000005/price-adjustments
+Authorization: Bearer {{backofficeToken}}
+Content-Type: application/json
+
+{ "percentage": 8, "reason": "Rand appreciation" }
+
+###
+GET {{api}}/api/catalog/backoffice/operations
+Authorization: Bearer {{backofficeToken}}
+
+### Memento: the cart's snapshots, and undo of the last change
+GET {{api}}/api/carts/{{cart.response.body.$.id}}/snapshots
+
+### Interpreter: check a promotion rule while marketing types it (errors point at the position)
+POST {{api}}/api/promotions/rules/validate
+Authorization: Bearer {{backofficeToken}}
+Content-Type: application/json
+
+{ "rule": "cart.total >= 2500 AN customer.city = \"Maputo\"" }

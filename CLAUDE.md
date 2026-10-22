@@ -212,7 +212,7 @@ Depois aguarda a minha confirmação.
 
 ## 10. Decision log & current status (kept up to date by the agent)
 
-**Current phase:** Phase 7 (Notifications) complete, so all 26 patterns are implemented; awaiting approval for Phase 8 (Polish).
+**Current phase:** all 8 phases complete (Phase 8, Polish, done); all 26 patterns implemented.
 
 Decisions taken (see `docs/adr/`):
 - Solution file is `Kanimambo.slnx`; SDK pinned in `global.json` (10.0.402, rollForward latestFeature).
@@ -294,3 +294,9 @@ Decisions taken (see `docs/adr/`):
   - **Testing the log.** Providers record a message before `SentNotifications` commits, so tests must wait for the log, not just the inbox.
   - **Outbox test lists.** `OrderPaid` now has 4 subscribers (Stock, Invoicing, Notifications, and the test's flaky one); the Ordering outbox tests list them.
 - **Source layout: one top-level type per file** (class, record, struct, interface, enum, delegate), and the file is named after the type. Nested types stay with their parent. When a generic and a non-generic type share a name, the generic one's file carries its type parameters (`Result{TValue}.cs`, `ICommand{TValue}.cs`). EF migrations are exempt. `tests/Kanimambo.ArchitectureTests/SourceLayoutTests.cs` enforces this for every file under `src` and `tests`.
+- Phase 8 (Polish):
+  - **Operations module.** It has `{Api, Application, Infrastructure}` and no data of its own; a keyed `PassThroughUnitOfWork` stands in for a transaction. It reads every publishing module's outbox through `IOutboxAdministration` (SharedKernel.Operations), which `AddModuleDbContext(..., publishesEvents: true)` registers per module. Endpoints: `GET /api/operations/outbox`, `GET /api/operations/outbox/dead-letters?module=`, `POST /api/operations/outbox/{module}/dead-letters/{id}/replay` (back-office). Replay resets `DeadLettered`, `Attempts`, `LockedUntil` and `NextAttemptAt`, and keeps `DeliveredTo`.
+  - **Idempotency scope** is `METHOD path caller`, where caller is the signed-in user name, or `-` for anonymous callers.
+  - **Demo.** `http/kanimambo-journey.http` is the end-to-end walkthrough. `scripts/demo.cs` (a .NET 10 file-based app: `dotnet run scripts/demo.cs`) runs it, resolving named-response variables, polling on `# demo: wait until $.path == "value"`, and creating the back-office token with user-jwts. `docs/demo.md` holds a real run's transcript.
+  - **CI badges.** The `Badges` report type is generated, and the `publish-badges` job, on main pushes only, force-pushes `badge_linecoverage.svg` and `badge_branchcoverage.svg` to the orphan `badges` branch that the README references.
+  - **Flaky test fixed.** `CatalogApiTests.Search_combines_query_string_filters` now reads every page; the 2 400-SKU wholesaler import in the same database could push the demo products off page 1. That was the cause of every past CI failure.

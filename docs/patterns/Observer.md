@@ -79,7 +79,7 @@ Delivery follows the same loop:
 1. **Dispatch.** Ordering publishes `OrderDispatched`.
 2. **Booking.** Shipping books a courier for every parcel.
 3. **Tracking.** Courier webhooks move the parcels forward, and Shipping publishes
-   `ParcelStatusChanged` for each step. Notifications will use these in Phase 7.
+   `ParcelStatusChanged` for each step; Notifications turns them into the customer's delivery SMS.
 4. **Delivered.** When every parcel arrives, Shipping publishes `OrderDelivered`, and Ordering marks
    the order delivered. For cash on delivery this is also when the order is paid, which in turn
    publishes `OrderPaid` and reserves stock.

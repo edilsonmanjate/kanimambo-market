@@ -50,7 +50,10 @@ internal sealed class IdempotencyMiddleware(RequestDelegate next, IProblemDetail
             return;
         }
 
-        var scope = $"{context.Request.Method} {context.Request.Path}";
+        // A key is scoped to the endpoint and the caller: two customers who happen to send the same key never get
+        // each other's stored response. Anonymous callers (guest carts) share one scope, as before.
+        var caller = context.User.Identity is { IsAuthenticated: true, Name: { Length: > 0 } name } ? name : "-";
+        var scope = $"{context.Request.Method} {context.Request.Path} {caller}";
         var fingerprint = await ComputeFingerprintAsync(context.Request, context.RequestAborted);
         var begin = await store.TryBeginAsync(scope, key, fingerprint, context.RequestAborted);
 

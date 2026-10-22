@@ -75,6 +75,22 @@ public sealed class IdempotencyTests(KanimamboApiFactory factory)
     }
 
     [Fact]
+    public async Task The_same_key_from_two_customers_never_shares_a_response()
+    {
+        var bucket = NewBucket();
+        var key = Guid.NewGuid().ToString();
+
+        var ana = await PostAsync($"counter/{bucket}", new CounterInput("cabaz do mês"), key, factory.CreateClientAs("ana"));
+        var rui = await PostAsync($"counter/{bucket}", new CounterInput("cabaz do mês"), key, factory.CreateClientAs("rui"));
+        var anaAgain = await PostAsync($"counter/{bucket}", new CounterInput("cabaz do mês"), key, factory.CreateClientAs("ana"));
+
+        rui.Headers.Contains(IdempotencyHeaders.Replayed).ShouldBeFalse();
+        (await rui.Content.ReadAsStringAsync(Ct)).ShouldNotBe(await ana.Content.ReadAsStringAsync(Ct));
+        anaAgain.Headers.GetValues(IdempotencyHeaders.Replayed).ShouldBe(["true"]);
+        State.Count(bucket).ShouldBe(2);
+    }
+
+    [Fact]
     public async Task Endpoints_that_require_a_key_reject_requests_without_one()
     {
         var bucket = NewBucket();
@@ -132,7 +148,7 @@ public sealed class IdempotencyTests(KanimamboApiFactory factory)
         (await CodeOf(response)).ShouldBe("idempotency.key_invalid");
     }
 
-    private async Task<HttpResponseMessage> PostAsync(string path, object? body, string? key = null)
+    private async Task<HttpResponseMessage> PostAsync(string path, object? body, string? key = null, HttpClient? client = null)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, new Uri($"/api/_probe/{path}", UriKind.Relative))
         {
@@ -144,7 +160,7 @@ public sealed class IdempotencyTests(KanimamboApiFactory factory)
             request.Headers.Add(IdempotencyHeaders.Key, key);
         }
 
-        return await _client.SendAsync(request, Ct);
+        return await (client ?? _client).SendAsync(request, Ct);
     }
 
     private static async Task<string?> CodeOf(HttpResponseMessage response) =>

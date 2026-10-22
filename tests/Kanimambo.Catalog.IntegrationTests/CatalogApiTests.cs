@@ -14,9 +14,20 @@ public sealed class CatalogApiTests(CatalogApiFactory factory)
     [Fact]
     public async Task Search_combines_query_string_filters()
     {
-        var page = await GetJson("/api/catalog/products?inStock=true&category=mercearia&deliversTo=Matola&minSellerRating=4&minPrice=500&maxPrice=2000");
+        // Every page: other tests in this database (the 2 400-SKU wholesaler import) add products that match too,
+        // so the demo sellers' products are not guaranteed to be on page 1.
+        var items = new List<JsonElement>();
+        for (var number = 1; ; number++)
+        {
+            var page = await GetJson($"/api/catalog/products?inStock=true&category=mercearia&deliversTo=Matola&minSellerRating=4&minPrice=500&maxPrice=2000&pageSize=100&page={number}");
+            items.AddRange(page.GetProperty("items").EnumerateArray());
+            if (items.Count >= page.GetProperty("totalCount").GetInt32() || page.GetProperty("items").GetArrayLength() == 0)
+            {
+                break;
+            }
+        }
 
-        page.GetProperty("items").EnumerateArray()
+        items
             .Where(i => CatalogSeeder.SellerIds.Contains(i.GetProperty("sellerId").GetGuid()))
             .Select(i => i.GetProperty("sku").GetString())
             .Order().ShouldBe(["GM-FARINHA-25", "MX-ARROZ-25", "MX-OLEO-5"]);

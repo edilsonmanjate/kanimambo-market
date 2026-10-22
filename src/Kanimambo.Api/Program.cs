@@ -15,6 +15,9 @@ using Kanimambo.Invoicing.Infrastructure;
 using Kanimambo.Notifications.Api.Controllers;
 using Kanimambo.Notifications.Application;
 using Kanimambo.Notifications.Infrastructure;
+using Kanimambo.Operations.Api.Controllers;
+using Kanimambo.Operations.Application;
+using Kanimambo.Operations.Infrastructure;
 using Kanimambo.Ordering.Api.Controllers;
 using Kanimambo.Ordering.Application;
 using Kanimambo.Ordering.Infrastructure;
@@ -53,6 +56,7 @@ builder.AddPaymentsModule();
 builder.AddShippingModule();
 builder.AddInvoicingModule();
 builder.AddNotificationsModule();
+builder.AddOperationsModule();
 builder.Services.AddKanimamboControllers()
     .AddApplicationPart(typeof(CatalogController).Assembly)
     .AddApplicationPart(typeof(PromotionsController).Assembly)
@@ -61,7 +65,8 @@ builder.Services.AddKanimamboControllers()
     .AddApplicationPart(typeof(PaymentsController).Assembly)
     .AddApplicationPart(typeof(ShippingController).Assembly)
     .AddApplicationPart(typeof(InvoicingController).Assembly)
-    .AddApplicationPart(typeof(NotificationsController).Assembly);
+    .AddApplicationPart(typeof(NotificationsController).Assembly)
+    .AddApplicationPart(typeof(OperationsController).Assembly);
 
 // Behaviors run in registration order (first = outermost).
 builder.Services.AddMediator(mediator => mediator
@@ -73,6 +78,7 @@ builder.Services.AddMediator(mediator => mediator
     .AddModule(ShippingModule.Name, typeof(ShippingModule).Assembly)
     .AddModule(InvoicingModule.Name, typeof(InvoicingModule).Assembly)
     .AddModule(NotificationsModule.Name, typeof(NotificationsModule).Assembly)
+    .AddModule(OperationsModule.Name, typeof(OperationsModule).Assembly)
     .AddBehavior(typeof(LoggingBehavior<,>))
     .AddBehavior(typeof(ValidationBehavior<,>))
     .AddBehavior(typeof(UnitOfWorkBehavior<,>))
